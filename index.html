@@ -1,0 +1,2283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>커플 궁합 테스트</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #000;
+  overflow: hidden;
+  width: 100vw;
+  height: 100dvh;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#game {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Background ─── */
+#bg {
+  position: absolute;
+  inset: 0;
+  transition: background 1.5s ease;
+  background: #1a1a2e;
+  z-index: 0;
+}
+
+/* ─── Scene Description ─── */
+#scene-desc {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 35%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  padding: 2rem;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
+}
+#scene-desc.visible { opacity: 1; }
+#scene-desc-text {
+  color: rgba(255,255,255,0.6);
+  font-size: 1.1rem;
+  font-weight: 300;
+  text-align: center;
+  letter-spacing: 0.05em;
+  line-height: 1.8;
+  text-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* ─── Dialogue Box ─── */
+#dialogue-box {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 35%;
+  min-height: 180px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0.95));
+  border-top: 1px solid rgba(255,255,255,0.1);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.6s ease;
+}
+#dialogue-box.slide-down { transform: translateY(100%); }
+#speaker {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  min-height: 1.8rem;
+}
+#speaker.narrator { color: rgba(255,255,255,0.4); font-style: italic; font-weight: 300; }
+#speaker.system { color: #40e0d0; }
+#speaker.heroine { color: #ff8fa3; }
+#speaker.hero { color: #74b9ff; }
+#text-area {
+  flex: 1;
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.9);
+  overflow-y: auto;
+}
+#continue-indicator {
+  padding: 0.5rem 1.5rem;
+  text-align: right;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.3);
+  animation: blink 1.2s ease-in-out infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ─── Choices ─── */
+#choices {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  z-index: 20;
+  padding: 2rem;
+}
+#choices.active { display: flex; }
+.choice-btn {
+  width: 100%; max-width: 500px;
+  padding: 1rem 1.5rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.9);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+.choice-btn:hover, .choice-btn:active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.5);
+  transform: translateX(5px);
+}
+
+/* ─── Fade / Flash / Shake ─── */
+#fade {
+  position: absolute; inset: 0;
+  background: #000; z-index: 50;
+  opacity: 1; transition: opacity 1s ease;
+  pointer-events: none;
+}
+#fade.hidden { opacity: 0; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-8px) translateY(3px); }
+  20% { transform: translateX(8px) translateY(-3px); }
+  30% { transform: translateX(-6px) translateY(2px); }
+  40% { transform: translateX(6px) translateY(-2px); }
+  50% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+}
+.shake { animation: shake 0.6s ease-in-out; }
+@keyframes flash { 0% { opacity: 0; } 10% { opacity: 0.8; } 100% { opacity: 0; } }
+#flash {
+  position: absolute; inset: 0;
+  background: #fff; z-index: 40;
+  opacity: 0; pointer-events: none;
+}
+#flash.active { animation: flash 0.5s ease-out; }
+
+/* ─── Title Screen ─── */
+#title-screen {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  cursor: pointer;
+}
+#title-screen h1 {
+  font-size: 2rem; font-weight: 700; color: #fff;
+  text-align: center; margin-bottom: 0.5rem; letter-spacing: 0.1em;
+}
+#title-screen .subtitle { font-size: 0.9rem; color: rgba(255,255,255,0.5); margin-bottom: 3rem; }
+#title-screen .start-text { font-size: 0.85rem; color: rgba(255,255,255,0.4); animation: blink 1.5s ease-in-out infinite; }
+
+/* ─── Puzzle Container ─── */
+#puzzle-container {
+  position: absolute; inset: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem;
+}
+#puzzle-container.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ─── Exploration: Tent ─── */
+.explore-tent {
+  width: 100%; max-width: 400px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1.5rem;
+}
+.tent-lanterns {
+  font-size: 2rem; letter-spacing: 2rem;
+  animation: lantern-glow 2s ease-in-out infinite alternate;
+}
+@keyframes lantern-glow {
+  0% { filter: brightness(0.7); }
+  100% { filter: brightness(1.3); }
+}
+.tent-objects {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem; width: 100%;
+}
+.tent-obj {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0.5rem;
+  padding: 1rem; border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+.tent-obj::after {
+  content: '';
+  position: absolute; inset: -2px;
+  border-radius: 14px;
+  background: radial-gradient(circle, rgba(255,200,100,0.15), transparent 70%);
+  animation: obj-glow 2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes obj-glow {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+.tent-obj:hover, .tent-obj:active {
+  background: rgba(255,255,255,0.15);
+  transform: scale(1.05);
+}
+.tent-obj-emoji { font-size: 2.5rem; }
+.tent-obj-label { font-size: 0.8rem; color: rgba(255,255,255,0.7); }
+.tent-couple { font-size: 2rem; margin-top: 0.5rem; color: rgba(255,255,255,0.5); }
+.tent-bubble {
+  background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px; padding: 1rem 1.2rem;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.9rem; line-height: 1.6;
+  min-height: 60px; width: 100%; text-align: center;
+  transition: opacity 0.3s;
+}
+
+/* ─── Exploration: Date Montage ─── */
+.date-montage { width: 100%; max-width: 420px; }
+.date-tabs {
+  display: flex; gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.date-tab {
+  flex: 1; padding: 0.8rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.8);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.85rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.date-tab:hover, .date-tab:active { background: rgba(255,255,255,0.15); }
+.date-tab.visited { border-color: rgba(160,120,255,0.5); background: rgba(160,120,255,0.1); }
+.date-tab.locked { opacity: 0.3; pointer-events: none; }
+.date-tab.unlocked { border-color: rgba(255,200,100,0.5); animation: blink 1.5s ease-in-out infinite; }
+.date-scene {
+  background: rgba(0,0,0,0.6); border-radius: 12px;
+  padding: 1.5rem; min-height: 200px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1rem;
+}
+.date-emoji { font-size: 3rem; }
+.date-dialogue {
+  color: rgba(255,255,255,0.85);
+  font-size: 0.9rem; line-height: 1.7; text-align: center;
+}
+.date-visited-count {
+  color: rgba(255,255,255,0.4); font-size: 0.75rem;
+  margin-top: 0.5rem; text-align: center;
+}
+
+/* ─── Puzzle 1: Mirror Dressing ─── */
+.mirror-puzzle { width: 100%; max-width: 420px; }
+.mirror-chars {
+  display: flex; justify-content: center;
+  gap: 2rem; margin-bottom: 1rem;
+}
+.mirror-char {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0.3rem;
+}
+.mirror-char-emoji { font-size: 3rem; }
+.mirror-char-label { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+.mirror-bubble {
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(116,185,255,0.3);
+  border-radius: 12px; padding: 0.8rem 1rem;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.9rem; text-align: center;
+  margin-bottom: 1.2rem; min-height: 50px;
+  transition: all 0.3s;
+}
+.mirror-category {
+  margin-bottom: 1rem;
+}
+.mirror-cat-label {
+  font-size: 0.8rem; color: rgba(255,255,255,0.5);
+  margin-bottom: 0.5rem;
+}
+.mirror-options {
+  display: flex; gap: 0.5rem;
+}
+.mirror-opt {
+  flex: 1; padding: 0.7rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.85);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.85rem; text-align: center;
+  cursor: pointer; transition: all 0.3s;
+}
+.mirror-opt:hover { background: rgba(255,255,255,0.15); }
+.mirror-opt.selected {
+  border-color: rgba(160,120,255,0.7);
+  background: rgba(160,120,255,0.15);
+}
+.mirror-confirm {
+  width: 100%; padding: 1rem;
+  margin-top: 1rem;
+  border-radius: 10px;
+  background: rgba(160,120,255,0.2);
+  border: 1px solid rgba(160,120,255,0.4);
+  color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 1rem; cursor: pointer;
+  transition: all 0.3s;
+  opacity: 0; pointer-events: none;
+}
+.mirror-confirm.visible {
+  opacity: 1; pointer-events: auto;
+}
+.mirror-confirm:hover { background: rgba(160,120,255,0.4); }
+
+/* ─── Puzzle 2: Puppy Communication ─── */
+.puppy-puzzle { width: 100%; max-width: 420px; }
+.puppy-gauge-wrap {
+  width: 100%; margin-bottom: 1rem;
+}
+.puppy-gauge-label {
+  font-size: 0.75rem; color: rgba(255,255,255,0.5);
+  margin-bottom: 0.3rem; display: flex;
+  justify-content: space-between;
+}
+.puppy-gauge-bar {
+  width: 100%; height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px; overflow: hidden;
+}
+.puppy-gauge-fill {
+  height: 100%; width: 20%;
+  background: linear-gradient(90deg, #56ab2f, #a8e063);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+.puppy-scene-area {
+  background: rgba(0,0,0,0.5);
+  border-radius: 12px; padding: 1.5rem;
+  min-height: 180px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1rem; margin-bottom: 1rem;
+}
+.puppy-scene-emoji { font-size: 3rem; }
+.puppy-scene-text {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.9rem; text-align: center; line-height: 1.6;
+}
+.puppy-options {
+  display: flex; gap: 0.8rem;
+  justify-content: center; flex-wrap: wrap;
+}
+.puppy-opt {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(255,255,255,0.15);
+  font-size: 1.8rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.3s;
+}
+.puppy-opt:hover, .puppy-opt:active {
+  background: rgba(255,255,255,0.15);
+  transform: scale(1.15);
+}
+.puppy-round-num {
+  font-size: 0.75rem; color: rgba(255,255,255,0.3);
+  text-align: center; margin-bottom: 0.5rem;
+}
+
+/* ─── Puzzle 3: Evidence Board ─── */
+.evidence-puzzle { width: 100%; max-width: 440px; }
+.evidence-title {
+  color: rgba(255,255,255,0.7); font-size: 0.9rem;
+  text-align: center; margin-bottom: 1rem;
+}
+.evidence-board {
+  background: linear-gradient(135deg, #5c3d2e, #8b6f47);
+  border-radius: 12px; padding: 1rem;
+  min-height: 120px; margin-bottom: 1rem;
+  border: 3px solid #3d2b1f;
+}
+.evidence-slots {
+  display: flex; gap: 0.5rem; justify-content: center;
+}
+.evidence-slot {
+  width: 100px; height: 70px;
+  border: 2px dashed rgba(255,255,255,0.3);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; color: rgba(255,255,255,0.4);
+  cursor: pointer; transition: all 0.3s;
+}
+.evidence-slot.filled {
+  border-style: solid;
+  border-color: rgba(255,255,255,0.5);
+  background: rgba(0,0,0,0.3);
+  font-size: 0.7rem; color: rgba(255,255,255,0.8);
+  padding: 0.3rem; text-align: center;
+}
+.evidence-slot.filled:hover { background: rgba(255,0,0,0.15); }
+.evidence-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem; margin-bottom: 1rem;
+}
+.evidence-card {
+  padding: 0.6rem 0.4rem;
+  background: rgba(255,255,200,0.08);
+  border: 1px solid rgba(255,255,200,0.2);
+  border-radius: 8px;
+  font-size: 0.75rem; color: rgba(255,255,255,0.85);
+  text-align: center; cursor: pointer;
+  transition: all 0.3s;
+}
+.evidence-card:hover { background: rgba(255,255,200,0.2); }
+.evidence-card.selected {
+  border-color: #f0c040;
+  background: rgba(240,192,64,0.15);
+}
+.evidence-card.used { opacity: 0.3; pointer-events: none; }
+.evidence-actions { display: flex; gap: 0.5rem; }
+.evidence-btn {
+  flex: 1; padding: 0.8rem;
+  border-radius: 8px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.9rem; cursor: pointer;
+  transition: all 0.3s; border: 1px solid;
+}
+.evidence-submit {
+  background: rgba(64,224,208,0.15);
+  border-color: rgba(64,224,208,0.4);
+  color: #40e0d0;
+}
+.evidence-submit:hover { background: rgba(64,224,208,0.3); }
+.evidence-submit:disabled { opacity: 0.3; pointer-events: none; }
+.evidence-giveup {
+  background: rgba(255,100,100,0.1);
+  border-color: rgba(255,100,100,0.3);
+  color: rgba(255,100,100,0.7);
+}
+.evidence-giveup:hover { background: rgba(255,100,100,0.2); }
+.evidence-result {
+  text-align: center; padding: 1rem;
+  font-size: 0.9rem; color: rgba(255,255,255,0.8);
+  min-height: 40px;
+}
+.evidence-tries {
+  font-size: 0.75rem; color: rgba(255,255,255,0.4);
+  text-align: center; margin-bottom: 0.5rem;
+}
+@keyframes stamp {
+  0% { transform: scale(3) rotate(-15deg); opacity: 0; }
+  50% { transform: scale(1.1) rotate(-12deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-12deg); opacity: 1; }
+}
+.evidence-stamp {
+  color: #ff3333; font-size: 2rem; font-weight: 700;
+  border: 4px solid #ff3333; padding: 0.3rem 1rem;
+  display: inline-block; transform: rotate(-12deg);
+  animation: stamp 0.4s ease-out;
+  margin-top: 0.5rem;
+}
+
+/* ─── Puzzle 4: Confrontation ─── */
+.confront-puzzle {
+  width: 100%; max-width: 400px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1rem;
+}
+.confront-timer-wrap {
+  position: relative;
+  width: 140px; height: 140px;
+}
+.confront-timer-ring {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    #ff4444 var(--angle, 360deg),
+    rgba(255,255,255,0.1) var(--angle, 360deg)
+  );
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.1s;
+}
+.confront-face {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3.5rem;
+}
+.confront-dialogue {
+  color: rgba(255,255,255,0.9);
+  font-size: 1.1rem; text-align: center;
+  line-height: 1.6; min-height: 50px;
+  padding: 0 1rem;
+}
+.confront-options {
+  display: flex; gap: 0.8rem;
+  justify-content: center; flex-wrap: wrap;
+}
+.confront-btn {
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+  cursor: pointer; transition: all 0.3s;
+  font-size: 1.5rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.confront-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
+.confront-btn-label {
+  font-size: 0.8rem; color: rgba(255,255,255,0.7);
+}
+.confront-round-info {
+  font-size: 0.75rem; color: rgba(255,255,255,0.3);
+}
+
+/* ─── Puzzle 5: Result Dashboard ─── */
+.result-puzzle {
+  width: 100%; max-width: 420px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1.2rem;
+}
+.result-score-big {
+  font-size: 5rem; font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 40px rgba(255,200,50,0.5);
+}
+.result-score-percent {
+  font-size: 1.8rem; color: rgba(255,255,255,0.7);
+  margin-top: -1rem;
+}
+.result-avg-text {
+  font-size: 0.85rem; color: rgba(255,255,255,0.5);
+  text-align: center;
+}
+.result-detail-btn {
+  padding: 0.8rem 2rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.95rem; cursor: pointer;
+  transition: all 0.3s;
+}
+.result-detail-btn:hover { background: rgba(255,255,255,0.2); }
+.result-categories {
+  width: 100%;
+  display: flex; flex-direction: column; gap: 0.8rem;
+}
+.result-cat {
+  padding: 1rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  cursor: pointer; transition: all 0.3s;
+}
+.result-cat:hover { background: rgba(255,255,255,0.1); }
+.result-cat.revealed { cursor: default; }
+.result-cat-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 0.5rem;
+}
+.result-cat-name {
+  font-size: 0.9rem; color: rgba(255,255,255,0.85);
+}
+.result-cat-score {
+  font-size: 0.9rem; font-weight: 700; color: #f0c040;
+  opacity: 0; transition: opacity 0.5s;
+}
+.result-cat.revealed .result-cat-score { opacity: 1; }
+.result-cat-bar {
+  width: 100%; height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px; overflow: hidden;
+}
+.result-cat-fill {
+  height: 100%; width: 0%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+.result-summary {
+  font-size: 1.1rem; color: #fff;
+  text-align: center; padding: 0.5rem;
+  opacity: 0; transition: opacity 0.5s;
+}
+.result-summary.visible { opacity: 1; }
+.result-exit {
+  padding: 0.8rem 2rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.95rem; cursor: pointer;
+  transition: all 0.3s;
+  opacity: 0; pointer-events: none;
+}
+.result-exit.visible {
+  opacity: 1; pointer-events: auto;
+}
+.result-exit:hover { background: rgba(255,255,255,0.2); }
+
+/* ─── Confetti ─── */
+.confetti {
+  position: fixed;
+  width: 10px; height: 10px; opacity: 0;
+  z-index: 200; pointer-events: none;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ─── Scene CG (image placeholder) ─── */
+#scene-cg {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px; height: 180px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.35);
+  border: 2px dashed rgba(255,255,255,0.12);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+#scene-cg.active { display: flex; }
+#scene-cg.visible { opacity: 1; }
+#scene-cg::after {
+  content: 'img';
+  position: absolute;
+  bottom: 6px; right: 10px;
+  font-size: 0.55rem;
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 0.1em;
+}
+
+/* ─── Dialogue Portrait ─── */
+#dialogue-top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1.2rem 0;
+}
+#portrait {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  position: relative;
+}
+#portrait.active { display: flex; }
+#portrait::after {
+  content: 'img';
+  position: absolute;
+  bottom: 1px; right: 3px;
+  font-size: 0.4rem;
+  color: rgba(255,255,255,0.15);
+}
+
+/* ─── Explore Header Image ─── */
+.explore-header-img {
+  width: 220px; height: 150px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.3);
+  border: 2px dashed rgba(255,255,255,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  position: relative;
+}
+.explore-header-img::after {
+  content: 'img';
+  position: absolute;
+  bottom: 6px; right: 10px;
+  font-size: 0.55rem;
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 0.1em;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 600px) {
+  #dialogue-box { height: 40%; }
+  #text-area { font-size: 0.9rem; }
+  #scene-desc-text { font-size: 0.95rem; }
+  .mirror-options { gap: 0.3rem; }
+  .mirror-opt { font-size: 0.8rem; padding: 0.5rem; }
+  .evidence-cards { grid-template-columns: repeat(2, 1fr); }
+  .evidence-slot { width: 80px; height: 60px; }
+  .confront-timer-wrap { width: 120px; height: 120px; }
+  .confront-face { width: 94px; height: 94px; font-size: 2.8rem; }
+  .result-score-big { font-size: 4rem; }
+  #scene-cg { width: 200px; height: 140px; font-size: 2.8rem; top: 5%; }
+  .explore-header-img { width: 180px; height: 120px; font-size: 2.5rem; }
+  #portrait { width: 38px; height: 38px; font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="bg"></div>
+  <div id="scene-desc"><div id="scene-desc-text"></div></div>
+  <div id="scene-cg"></div>
+  <div id="puzzle-container"></div>
+  <div id="dialogue-box">
+    <div id="dialogue-top">
+      <div id="portrait"></div>
+      <div id="speaker"></div>
+    </div>
+    <div id="text-area"></div>
+    <div id="continue-indicator">클릭하여 계속 ▼</div>
+  </div>
+  <div id="choices"></div>
+  <div id="fade"></div>
+  <div id="flash"></div>
+  <div id="title-screen">
+    <h1>커플 궁합 테스트</h1>
+    <div class="subtitle">쯔꾸르 스타일 스토리 게임</div>
+    <div class="start-text">화면을 터치하여 시작</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  DOM REFERENCES
+// ═══════════════════════════════════════
+const $ = id => document.getElementById(id);
+const bg = $('bg');
+const speakerEl = $('speaker');
+const textArea = $('text-area');
+const continueInd = $('continue-indicator');
+const choicesEl = $('choices');
+const fade = $('fade');
+const flash = $('flash');
+const titleScreen = $('title-screen');
+const sceneDesc = $('scene-desc');
+const sceneDescText = $('scene-desc-text');
+const puzzleContainer = $('puzzle-container');
+const dialogueBox = $('dialogue-box');
+const sceneCg = $('scene-cg');
+const portraitEl = $('portrait');
+const game = $('game');
+
+// ═══════════════════════════════════════
+//  ENGINE STATE
+// ═══════════════════════════════════════
+let currentLine = 0;
+let typing = false;
+let typingTimer = null;
+let fullText = '';
+let canAdvance = false;
+let waitingForChoice = false;
+let waitingForPuzzle = false;
+let gameStarted = false;
+let currentPortraits = { heroine: '👩', hero: '🧑', system: '🖥️' };
+
+const NARRATOR = 'narrator';
+const HEROINE = 'heroine';
+const HERO = 'hero';
+const SYSTEM = 'system';
+
+function speakerName(type) {
+  switch(type) {
+    case HEROINE: return '나';
+    case HERO: return '남자친구';
+    case SYSTEM: return 'SYSTEM';
+    default: return '';
+  }
+}
+
+// ═══════════════════════════════════════
+//  UTILITY FUNCTIONS
+// ═══════════════════════════════════════
+function typeText(text, callback) {
+  textArea.textContent = '';
+  fullText = text;
+  typing = true;
+  canAdvance = false;
+  continueInd.style.visibility = 'hidden';
+  let i = 0;
+  const speed = 35;
+  function typeChar() {
+    if (i < text.length) {
+      textArea.textContent += text[i];
+      i++;
+      typingTimer = setTimeout(typeChar, speed);
+    } else {
+      typing = false;
+      canAdvance = true;
+      continueInd.style.visibility = 'visible';
+      if (callback) callback();
+    }
+  }
+  typeChar();
+}
+
+function skipTyping() {
+  if (typing) {
+    clearTimeout(typingTimer);
+    textArea.textContent = fullText;
+    typing = false;
+    canAdvance = true;
+    continueInd.style.visibility = 'visible';
+  }
+}
+
+function setBg(gradient) { bg.style.background = gradient; }
+
+function setSceneDesc(text) {
+  if (text) {
+    sceneDescText.textContent = text;
+    sceneDesc.classList.add('visible');
+  } else {
+    sceneDesc.classList.remove('visible');
+  }
+}
+
+function doFade(callback) {
+  fade.classList.remove('hidden');
+  setTimeout(() => {
+    if (callback) callback();
+    setTimeout(() => fade.classList.add('hidden'), 200);
+  }, 800);
+}
+
+function doShake() {
+  game.classList.add('shake');
+  setTimeout(() => game.classList.remove('shake'), 600);
+}
+
+function doFlash() {
+  flash.classList.add('active');
+  setTimeout(() => flash.classList.remove('active'), 500);
+}
+
+function showCg(emoji) {
+  sceneCg.textContent = emoji;
+  sceneCg.classList.add('active');
+  requestAnimationFrame(() => sceneCg.classList.add('visible'));
+}
+
+function hideCg() {
+  sceneCg.classList.remove('visible');
+  setTimeout(() => { sceneCg.classList.remove('active'); sceneCg.textContent = ''; }, 600);
+}
+
+function showPortrait(type) {
+  if (type === NARRATOR || !type) {
+    portraitEl.classList.remove('active');
+    portraitEl.textContent = '';
+    return;
+  }
+  const emoji = currentPortraits[type] || '';
+  if (emoji) {
+    portraitEl.textContent = emoji;
+    portraitEl.classList.add('active');
+  } else {
+    portraitEl.classList.remove('active');
+  }
+}
+
+function createConfetti() {
+  const colors = ['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#01a3a4','#f368e0'];
+  for (let i = 0; i < 50; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.top = '-20px';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.width = (Math.random() * 8 + 5) + 'px';
+    c.style.height = (Math.random() * 8 + 5) + 'px';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    c.style.animation = `confetti-fall ${Math.random()*2+2}s linear ${Math.random()*0.5}s forwards`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4500);
+  }
+}
+
+function showChoices(options) {
+  waitingForChoice = true;
+  choicesEl.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = opt.text;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      waitingForChoice = false;
+      choicesEl.classList.remove('active');
+      currentLine++;
+      processLine();
+    });
+    choicesEl.appendChild(btn);
+  });
+  choicesEl.classList.add('active');
+  continueInd.style.visibility = 'hidden';
+}
+
+// ═══════════════════════════════════════
+//  MODE SWITCHING
+// ═══════════════════════════════════════
+function enterInteractiveMode(callback) {
+  waitingForPuzzle = true;
+  canAdvance = false;
+  continueInd.style.visibility = 'hidden';
+  dialogueBox.classList.add('slide-down');
+  sceneDesc.classList.remove('visible');
+  setTimeout(() => {
+    puzzleContainer.classList.add('active');
+    callback();
+  }, 600);
+}
+
+function exitInteractiveMode() {
+  puzzleContainer.classList.remove('active');
+  setTimeout(() => {
+    puzzleContainer.innerHTML = '';
+    dialogueBox.classList.remove('slide-down');
+    waitingForPuzzle = false;
+    currentLine++;
+    setTimeout(() => processLine(), 400);
+  }, 500);
+}
+
+// ═══════════════════════════════════════
+//  EXPLORATION MODULES
+// ═══════════════════════════════════════
+const explorations = {
+
+  tent_interior(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'explore-tent';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'explore-header-img';
+    hdr.textContent = '🏮🖥️🪑';
+    wrap.appendChild(hdr);
+
+    const bubble = document.createElement('div');
+    bubble.className = 'tent-bubble';
+    bubble.textContent = '천막 안을 둘러보자...';
+
+    const objects = [
+      { emoji: '🖥️', label: 'VR 기기', msg: '가상현실 글래스처럼 생긴 첨단 장비다.\n꽤 비싸 보이는데...' },
+      { emoji: '📋', label: '설명서', msg: '체험자의 데이터로 시뮬레이션을 돌린다고 적혀있다.\n"가상현실 속 1일은 현실의 0.001초"' },
+      { emoji: '🪑', label: '앉기', action: true, msg: '의자에 앉아 장비를 착용하기로 했다.' },
+    ];
+
+    const grid = document.createElement('div');
+    grid.className = 'tent-objects';
+    objects.forEach(obj => {
+      const el = document.createElement('div');
+      el.className = 'tent-obj';
+      el.innerHTML = `<div class="tent-obj-emoji">${obj.emoji}</div><div class="tent-obj-label">${obj.label}</div>`;
+      el.addEventListener('click', () => {
+        bubble.textContent = obj.msg;
+        if (obj.action) {
+          setTimeout(() => onComplete(), 800);
+        }
+      });
+      grid.appendChild(el);
+    });
+    wrap.appendChild(grid);
+
+    const couple = document.createElement('div');
+    couple.className = 'tent-couple';
+    couple.textContent = '👫';
+    wrap.appendChild(couple);
+
+    wrap.appendChild(bubble);
+    container.appendChild(wrap);
+  },
+
+  date_montage(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'date-montage';
+    const hdr = document.createElement('div');
+    hdr.className = 'explore-header-img';
+    hdr.textContent = '💑🌆';
+    hdr.style.margin = '0 auto 1rem';
+    wrap.appendChild(hdr);
+
+    const locations = [
+      { emoji: '☕', label: '카페', scene: '☕🧁', dialogue: '"이 몸으로 카페라니, 신기하다."\n"너 의외로 아메리카노 잘 어울린다?"' },
+      { emoji: '🌳', label: '공원', scene: '🌳🐦', dialogue: '"바람이 좋다... 좀 적응된 것 같아."\n"그치? 나도 이제 좀 편해."' },
+      { emoji: '🎬', label: '영화관', scene: '🎬🍿', dialogue: '"팔걸이가 좀 좁아졌는데?"\n"하하, 덩치가 바뀌었으니까!"' },
+      { emoji: '🌙', label: '집으로', scene: '🌙🏠', dialogue: null, action: true },
+    ];
+
+    let visited = new Set();
+
+    const tabs = document.createElement('div');
+    tabs.className = 'date-tabs';
+
+    const sceneArea = document.createElement('div');
+    sceneArea.className = 'date-scene';
+    sceneArea.innerHTML = '<div class="date-emoji">💜</div><div class="date-dialogue">장소를 선택해서 데이트를 즐기자!</div>';
+
+    const countEl = document.createElement('div');
+    countEl.className = 'date-visited-count';
+    countEl.textContent = '방문한 장소: 0 / 3';
+
+    function updateTabs() {
+      tabs.querySelectorAll('.date-tab').forEach((tab, i) => {
+        const loc = locations[i];
+        tab.classList.toggle('visited', visited.has(i));
+        if (loc.action) {
+          if (visited.size >= 3) {
+            tab.classList.remove('locked');
+            tab.classList.add('unlocked');
+          } else {
+            tab.classList.add('locked');
+            tab.classList.remove('unlocked');
+          }
+        }
+      });
+      countEl.textContent = `방문한 장소: ${Math.min(visited.size, 3)} / 3`;
+    }
+
+    locations.forEach((loc, i) => {
+      const tab = document.createElement('button');
+      tab.className = 'date-tab';
+      if (loc.action) tab.classList.add('locked');
+      tab.textContent = `${loc.emoji} ${loc.label}`;
+      tab.addEventListener('click', () => {
+        if (loc.action) {
+          if (visited.size >= 3) {
+            sceneArea.innerHTML = `<div class="date-emoji">${loc.scene}</div><div class="date-dialogue">밤이 깊어간다... 집으로 돌아가기로 했다.</div>`;
+            setTimeout(() => onComplete(), 1200);
+          }
+          return;
+        }
+        visited.add(i);
+        sceneArea.innerHTML = `<div class="date-emoji">${loc.scene}</div><div class="date-dialogue">${loc.dialogue}</div>`;
+        updateTabs();
+      });
+      tabs.appendChild(tab);
+    });
+
+    wrap.appendChild(tabs);
+    wrap.appendChild(sceneArea);
+    wrap.appendChild(countEl);
+    container.appendChild(wrap);
+    updateTabs();
+  },
+
+  // ─── Festival Street ───
+  festival_street(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'explore-tent';
+    const hdr = document.createElement('div');
+    hdr.className = 'explore-header-img';
+    hdr.textContent = '🎪🏮✨';
+    wrap.appendChild(hdr);
+    const objects = [
+      { emoji: '🍢', label: '포장마차', msg: '떡볶이, 순대, 어묵...\n맛있는 냄새가 코를 자극한다.' },
+      { emoji: '🎯', label: '게임 부스', msg: '인형뽑기와 사격 게임이 있다.\n"나중에 해볼까?"' },
+      { emoji: '🎪', label: '수상한 천막', msg: '"AI가 봐주는 커플 궁합!"\n...뭔가 끌린다. 들어가볼까?', action: true },
+    ];
+    const bubble = document.createElement('div');
+    bubble.className = 'tent-bubble';
+    bubble.textContent = '축제 거리를 둘러보자...';
+    const grid = document.createElement('div');
+    grid.className = 'tent-objects';
+    objects.forEach(obj => {
+      const el = document.createElement('div');
+      el.className = 'tent-obj';
+      el.innerHTML = `<div class="tent-obj-emoji">${obj.emoji}</div><div class="tent-obj-label">${obj.label}</div>`;
+      el.addEventListener('click', () => {
+        bubble.textContent = obj.msg;
+        if (obj.action) setTimeout(() => onComplete(), 800);
+      });
+      grid.appendChild(el);
+    });
+    wrap.appendChild(grid);
+    wrap.appendChild(bubble);
+    container.appendChild(wrap);
+  },
+
+  // ─── Gender Check ───
+  gender_check(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'explore-tent';
+    const hdr = document.createElement('div');
+    hdr.className = 'explore-header-img';
+    hdr.textContent = '🪞👤❓';
+    wrap.appendChild(hdr);
+    const objects = [
+      { emoji: '🪞', label: '거울', msg: '...이게 나? 턱선이 각져있고,\n어깨가 넓어졌다. 낯설다.' },
+      { emoji: '🤚', label: '내 손', msg: '손이 커졌다. 손등에 핏줄이 선명하다.\n힘도 세진 것 같은데...' },
+      { emoji: '👕', label: '옷차림', msg: '옷은 그대로인데 핏이 완전히 다르다.\n가슴 쪽이 헐렁하고 어깨가 빡빡하다.' },
+      { emoji: '✅', label: '적응하기', msg: '이 모습에 익숙해져야 한다.', action: true },
+    ];
+    const bubble = document.createElement('div');
+    bubble.className = 'tent-bubble';
+    bubble.textContent = '바뀐 몸을 확인해보자...';
+    const grid = document.createElement('div');
+    grid.className = 'tent-objects';
+    objects.forEach(obj => {
+      const el = document.createElement('div');
+      el.className = 'tent-obj';
+      el.innerHTML = `<div class="tent-obj-emoji">${obj.emoji}</div><div class="tent-obj-label">${obj.label}</div>`;
+      el.addEventListener('click', () => {
+        bubble.textContent = obj.msg;
+        if (obj.action) setTimeout(() => onComplete(), 800);
+      });
+      grid.appendChild(el);
+    });
+    wrap.appendChild(grid);
+    wrap.appendChild(bubble);
+    container.appendChild(wrap);
+  },
+
+  // ─── Puppy House ───
+  puppy_house(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'explore-tent';
+    const hdr = document.createElement('div');
+    hdr.className = 'explore-header-img';
+    hdr.textContent = '🏠🐾';
+    wrap.appendChild(hdr);
+    const title = document.createElement('div');
+    title.style.cssText = 'color:rgba(255,255,255,0.4);font-size:0.8rem;text-align:center;margin-bottom:0.5rem;';
+    title.textContent = '🐾 낮은 시야로 집 안을 둘러본다...';
+    wrap.appendChild(title);
+    const objects = [
+      { emoji: '🍽️', label: '밥그릇', msg: '바닥에 놓인 작은 그릇. 물도 있다.\n...이걸로 먹어야 하나.' },
+      { emoji: '🛋️', label: '소파 밑', msg: '어둡고 먼지가 있다.\n이상하게 안전한 느낌이 든다.' },
+      { emoji: '🚪', label: '현관문', msg: '너무 크다. 손잡이에 닿을 수 없다.\n...발로 긁어보지만 소용없다.' },
+      { emoji: '🧸', label: '장난감', msg: '씹을 수 있는 인형이다.\n본능적으로 물고 싶어진다... 뭐야 이 감정.' },
+      { emoji: '🐕', label: '그에게 가기', msg: '남자친구에게 다가간다.', action: true },
+    ];
+    const bubble = document.createElement('div');
+    bubble.className = 'tent-bubble';
+    bubble.textContent = '...여기가 어디지?';
+    const grid = document.createElement('div');
+    grid.className = 'tent-objects';
+    objects.forEach(obj => {
+      const el = document.createElement('div');
+      el.className = 'tent-obj';
+      el.innerHTML = `<div class="tent-obj-emoji">${obj.emoji}</div><div class="tent-obj-label">${obj.label}</div>`;
+      el.addEventListener('click', () => {
+        bubble.textContent = obj.msg;
+        if (obj.action) setTimeout(() => onComplete(), 800);
+      });
+      grid.appendChild(el);
+    });
+    wrap.appendChild(grid);
+    wrap.appendChild(bubble);
+    container.appendChild(wrap);
+  },
+
+  // ─── Prison Visit ───
+  prison_visit(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'explore-tent';
+    const hdr = document.createElement('div');
+    hdr.className = 'explore-header-img';
+    hdr.textContent = '🔒🪟';
+    wrap.appendChild(hdr);
+    const objects = [
+      { emoji: '🪟', label: '유리창', msg: '두꺼운 유리 너머로 그의 얼굴이 보인다.\n수척해졌다. 눈 밑이 어둡다.' },
+      { emoji: '📞', label: '전화기', msg: '이걸 통해서만 대화할 수 있다.\n수화기가 차갑다.' },
+      { emoji: '📝', label: '벽의 낙서', msg: '누군가 날짜를 세어놓았다.\n수백 개의 줄금... 숨이 막힌다.' },
+      { emoji: '🚶', label: '돌아가기', msg: '...오늘은 여기까지.', action: true },
+    ];
+    const bubble = document.createElement('div');
+    bubble.className = 'tent-bubble';
+    bubble.textContent = '면회실을 둘러본다...';
+    const grid = document.createElement('div');
+    grid.className = 'tent-objects';
+    objects.forEach(obj => {
+      const el = document.createElement('div');
+      el.className = 'tent-obj';
+      el.innerHTML = `<div class="tent-obj-emoji">${obj.emoji}</div><div class="tent-obj-label">${obj.label}</div>`;
+      el.addEventListener('click', () => {
+        bubble.textContent = obj.msg;
+        if (obj.action) setTimeout(() => onComplete(), 800);
+      });
+      grid.appendChild(el);
+    });
+    wrap.appendChild(grid);
+    wrap.appendChild(bubble);
+    container.appendChild(wrap);
+  },
+
+  // ─── Empty Lot ───
+  empty_lot(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'explore-tent';
+    const hdr = document.createElement('div');
+    hdr.className = 'explore-header-img';
+    hdr.textContent = '🏗️🌑';
+    wrap.appendChild(hdr);
+    const objects = [
+      { emoji: '🏗️', label: '공사 장비', msg: '철근과 자재가 널려있다.\n위험해 보인다. 조심해야...' },
+      { emoji: '🌑', label: '어두운 골목', msg: '가로등이 깜빡인다.\n도망칠 수 있을까...' },
+      { emoji: '💬', label: '말을 건다', msg: '...진정시켜야 해.', action: true },
+    ];
+    const bubble = document.createElement('div');
+    bubble.className = 'tent-bubble';
+    bubble.textContent = '어둡고 을씨년스러운 공터...';
+    const grid = document.createElement('div');
+    grid.className = 'tent-objects';
+    objects.forEach(obj => {
+      const el = document.createElement('div');
+      el.className = 'tent-obj';
+      el.innerHTML = `<div class="tent-obj-emoji">${obj.emoji}</div><div class="tent-obj-label">${obj.label}</div>`;
+      el.addEventListener('click', () => {
+        bubble.textContent = obj.msg;
+        if (obj.action) setTimeout(() => onComplete(), 800);
+      });
+      grid.appendChild(el);
+    });
+    wrap.appendChild(grid);
+    wrap.appendChild(bubble);
+    container.appendChild(wrap);
+  }
+};
+
+// ═══════════════════════════════════════
+//  PUZZLE MODULES
+// ═══════════════════════════════════════
+const puzzles = {
+
+  // ─── ① Mirror Dressing ───
+  mirror_dressing(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'mirror-puzzle';
+
+    // Characters
+    const chars = document.createElement('div');
+    chars.className = 'mirror-chars';
+    chars.innerHTML = `
+      <div class="mirror-char"><div class="mirror-char-emoji">🧑</div><div class="mirror-char-label">나 (남성화)</div></div>
+      <div class="mirror-char"><div class="mirror-char-emoji">👩</div><div class="mirror-char-label">남친 (여성화)</div></div>
+    `;
+    wrap.appendChild(chars);
+
+    // Boyfriend reaction bubble
+    const bubble = document.createElement('div');
+    bubble.className = 'mirror-bubble';
+    bubble.textContent = '스타일을 골라봐...';
+    wrap.appendChild(bubble);
+
+    const reactions = {
+      f: ['😊 "그래, 어울려!"', '😊 "이게 좋다"', '😊 "예쁘다!"'],
+      n: ['🤔 "음... 괜찮은 것 같기도?"', '🤔 "글쎄..."', '🤔 "나쁘진 않아"'],
+      m: ['😟 "...음... 좀 그런데"', '😟 "이건 좀..."', '😟 "차라리 다른 걸로..."'],
+    };
+
+    const categories = [
+      { label: '머리 스타일', options: [
+        { text: '💇‍♀️ 긴 머리', type: 'f' },
+        { text: '💇 단발', type: 'n' },
+        { text: '💇‍♂️ 짧은 머리', type: 'm' },
+      ]},
+      { label: '옷', options: [
+        { text: '👗 원피스', type: 'f' },
+        { text: '👔 셔츠', type: 'n' },
+        { text: '🧥 재킷', type: 'm' },
+      ]},
+      { label: '액세서리', options: [
+        { text: '💄 립스틱', type: 'f' },
+        { text: '⌚ 시계', type: 'n' },
+        { text: '🧢 모자', type: 'm' },
+      ]},
+    ];
+
+    let selCount = 0;
+    let selections = {};
+
+    categories.forEach((cat, ci) => {
+      const catEl = document.createElement('div');
+      catEl.className = 'mirror-category';
+      catEl.innerHTML = `<div class="mirror-cat-label">${cat.label}</div>`;
+      const optsEl = document.createElement('div');
+      optsEl.className = 'mirror-options';
+      cat.options.forEach((opt, oi) => {
+        const btn = document.createElement('button');
+        btn.className = 'mirror-opt';
+        btn.textContent = opt.text;
+        btn.addEventListener('click', () => {
+          optsEl.querySelectorAll('.mirror-opt').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          if (!selections[ci]) selCount++;
+          selections[ci] = opt.type;
+          const rArr = reactions[opt.type];
+          bubble.textContent = rArr[ci];
+          if (selCount >= 3) confirmBtn.classList.add('visible');
+        });
+        optsEl.appendChild(btn);
+      });
+      catEl.appendChild(optsEl);
+      wrap.appendChild(catEl);
+    });
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'mirror-confirm';
+    confirmBtn.textContent = '🪞 거울 확인';
+    confirmBtn.addEventListener('click', () => onComplete());
+    wrap.appendChild(confirmBtn);
+
+    container.appendChild(wrap);
+  },
+
+  // ─── ② Puppy Communication ───
+  puppy_comm(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'puppy-puzzle';
+
+    const rounds = [
+      { scene: '🍽️🧑', text: '남자친구가 밥을 먹고 있다.', options: [
+        { emoji: '🐾', correct: true },
+        { emoji: '🐕', correct: true },
+        { emoji: '😢', correct: false },
+        { emoji: '🔄', correct: false },
+      ]},
+      { scene: '😢🛋️', text: '남자친구가 소파에서 울고 있다.', options: [
+        { emoji: '🐾', correct: true },
+        { emoji: '🎾', correct: true },
+        { emoji: '🐕', correct: true },
+        { emoji: '🔄', correct: false },
+      ]},
+      { scene: '🚶🚪', text: '남자친구가 외출한다.', options: [
+        { emoji: '🐕', correct: true },
+        { emoji: '🐾', correct: true },
+        { emoji: '😢', correct: false },
+        { emoji: '🔄', correct: false },
+      ]},
+      { scene: '🌙👻', text: '밤에 이상한 소리가 들린다.', options: [
+        { emoji: '🐾', correct: true },
+        { emoji: '🐕', correct: true },
+        { emoji: '😢', correct: false },
+        { emoji: '🔄', correct: false },
+      ]},
+      { scene: '👁️✨', text: '남자친구가 나를 바라본다.', options: [
+        { emoji: '❤️', correct: true },
+        { emoji: '🐾', correct: true },
+        { emoji: '🐕', correct: true },
+      ]},
+    ];
+
+    let currentRound = 0;
+    let correctCount = 0;
+    let gauge = 20;
+
+    // Gauge
+    const gaugeWrap = document.createElement('div');
+    gaugeWrap.className = 'puppy-gauge-wrap';
+    gaugeWrap.innerHTML = `
+      <div class="puppy-gauge-label"><span>유대감</span><span class="puppy-gauge-val">${gauge}%</span></div>
+      <div class="puppy-gauge-bar"><div class="puppy-gauge-fill" style="width:${gauge}%"></div></div>
+    `;
+    wrap.appendChild(gaugeWrap);
+
+    const roundNum = document.createElement('div');
+    roundNum.className = 'puppy-round-num';
+    wrap.appendChild(roundNum);
+
+    const sceneArea = document.createElement('div');
+    sceneArea.className = 'puppy-scene-area';
+    wrap.appendChild(sceneArea);
+
+    const optionsArea = document.createElement('div');
+    optionsArea.className = 'puppy-options';
+    wrap.appendChild(optionsArea);
+
+    function updateGauge() {
+      gaugeWrap.querySelector('.puppy-gauge-fill').style.width = gauge + '%';
+      gaugeWrap.querySelector('.puppy-gauge-val').textContent = gauge + '%';
+    }
+
+    function renderRound() {
+      if (currentRound >= rounds.length) {
+        // Finish
+        sceneArea.innerHTML = `<div class="puppy-scene-emoji">🐶❤️🧑</div>
+          <div class="puppy-scene-text">${correctCount >= 3
+            ? '말이 통하지 않아도, 눈빛으로, 행동으로, 온기로.\n서로의 마음을 전할 수 있었다.\n\n이제까지 느껴보지 못한 유대감이 남아있었다.'
+            : '완벽하지는 않았지만...\n어떻게든 마음은 전해졌다.'}</div>`;
+        optionsArea.innerHTML = '';
+        roundNum.textContent = '';
+        setTimeout(() => onComplete(), 2000);
+        return;
+      }
+
+      const r = rounds[currentRound];
+      roundNum.textContent = `${currentRound + 1} / ${rounds.length}`;
+      sceneArea.innerHTML = `<div class="puppy-scene-emoji">${r.scene}</div><div class="puppy-scene-text">${r.text}</div>`;
+      optionsArea.innerHTML = '';
+
+      r.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'puppy-opt';
+        btn.textContent = opt.emoji;
+        btn.addEventListener('click', () => {
+          if (opt.correct) {
+            correctCount++;
+            gauge = Math.min(100, gauge + 16);
+          } else {
+            gauge = Math.min(100, gauge + 4);
+          }
+          updateGauge();
+          currentRound++;
+          setTimeout(() => renderRound(), 600);
+        });
+        optionsArea.appendChild(btn);
+      });
+    }
+
+    container.appendChild(wrap);
+    renderRound();
+  },
+
+  // ─── ③ Evidence Board ───
+  evidence_board(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'evidence-puzzle';
+
+    const cards = [
+      { emoji: '📋', name: '부스 이용 동의서' },
+      { emoji: '🎮', name: 'VR 데이터 로그' },
+      { emoji: '📱', name: '커플 대화 기록' },
+      { emoji: '👥', name: '목격자 진술' },
+      { emoji: '⚖️', name: '기계 설명서' },
+      { emoji: '🚨', name: '함정 수사 기록' },
+    ];
+
+    const rejections = [
+      '증거 불충분. 기각.',
+      'VR 내 행위도 범죄 의도로 간주됩니다. 기각.',
+      '최종 기각. 항소 불가.',
+    ];
+
+    let slots = [null, null, null];
+    let selectedCard = null;
+    let tries = 0;
+    const maxTries = 3;
+
+    const title = document.createElement('div');
+    title.className = 'evidence-title';
+    title.textContent = '변호를 위한 증거를 제출하세요';
+    wrap.appendChild(title);
+
+    const triesEl = document.createElement('div');
+    triesEl.className = 'evidence-tries';
+    triesEl.textContent = `시도: ${tries} / ${maxTries}`;
+    wrap.appendChild(triesEl);
+
+    // Board
+    const board = document.createElement('div');
+    board.className = 'evidence-board';
+    const slotsEl = document.createElement('div');
+    slotsEl.className = 'evidence-slots';
+    for (let i = 0; i < 3; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'evidence-slot';
+      slot.textContent = `슬롯 ${i + 1}`;
+      slot.dataset.index = i;
+      slot.addEventListener('click', () => {
+        if (slots[i] !== null) {
+          // Remove card from slot
+          const cardIdx = slots[i];
+          slots[i] = null;
+          slot.className = 'evidence-slot';
+          slot.textContent = `슬롯 ${i + 1}`;
+          cardsEl.children[cardIdx].classList.remove('used');
+          updateSubmit();
+        } else if (selectedCard !== null) {
+          // Place selected card
+          slots[i] = selectedCard;
+          slot.className = 'evidence-slot filled';
+          slot.textContent = `${cards[selectedCard].emoji} ${cards[selectedCard].name}`;
+          cardsEl.children[selectedCard].classList.add('used');
+          cardsEl.children[selectedCard].classList.remove('selected');
+          selectedCard = null;
+          updateSubmit();
+        }
+      });
+      slotsEl.appendChild(slot);
+    }
+    board.appendChild(slotsEl);
+    wrap.appendChild(board);
+
+    // Cards
+    const cardsEl = document.createElement('div');
+    cardsEl.className = 'evidence-cards';
+    cards.forEach((card, i) => {
+      const el = document.createElement('div');
+      el.className = 'evidence-card';
+      el.textContent = `${card.emoji} ${card.name}`;
+      el.addEventListener('click', () => {
+        if (el.classList.contains('used')) return;
+        cardsEl.querySelectorAll('.evidence-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedCard = i;
+      });
+      cardsEl.appendChild(el);
+    });
+    wrap.appendChild(cardsEl);
+
+    // Result area
+    const resultEl = document.createElement('div');
+    resultEl.className = 'evidence-result';
+    wrap.appendChild(resultEl);
+
+    // Buttons
+    const actions = document.createElement('div');
+    actions.className = 'evidence-actions';
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'evidence-btn evidence-submit';
+    submitBtn.textContent = '제출';
+    submitBtn.disabled = true;
+    const giveupBtn = document.createElement('button');
+    giveupBtn.className = 'evidence-btn evidence-giveup';
+    giveupBtn.textContent = '포기';
+
+    function updateSubmit() {
+      submitBtn.disabled = slots.filter(s => s !== null).length < 3;
+    }
+
+    submitBtn.addEventListener('click', () => {
+      tries++;
+      triesEl.textContent = `시도: ${tries} / ${maxTries}`;
+      resultEl.innerHTML = `<div>${rejections[tries - 1]}</div><div class="evidence-stamp">REJECTED</div>`;
+      doShake();
+
+      // Reset slots
+      slots = [null, null, null];
+      selectedCard = null;
+      slotsEl.querySelectorAll('.evidence-slot').forEach((s, i) => {
+        s.className = 'evidence-slot';
+        s.textContent = `슬롯 ${i + 1}`;
+      });
+      cardsEl.querySelectorAll('.evidence-card').forEach(c => {
+        c.classList.remove('used', 'selected');
+      });
+      updateSubmit();
+
+      if (tries >= maxTries) {
+        submitBtn.disabled = true;
+        cardsEl.style.opacity = '0.3';
+        cardsEl.style.pointerEvents = 'none';
+        setTimeout(() => onComplete(), 2000);
+      }
+    });
+
+    giveupBtn.addEventListener('click', () => {
+      resultEl.innerHTML = '<div>...변호를 포기했다.</div>';
+      setTimeout(() => onComplete(), 1200);
+    });
+
+    actions.appendChild(submitBtn);
+    actions.appendChild(giveupBtn);
+    wrap.appendChild(actions);
+
+    container.appendChild(wrap);
+  },
+
+  // ─── ④ Confrontation ───
+  confrontation(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'confront-puzzle';
+
+    const rounds = [
+      { text: '"난 널 아직 사랑해"', emoji: '😊', time: 5000,
+        options: [{e:'❤️',l:'나도'},{e:'😶',l:'침묵'},{e:'🚪',l:'그만하자'}], shk: false },
+      { text: '"다시 시작하자"', emoji: '🥺', time: 4000,
+        options: [{e:'❤️',l:'생각해볼게'},{e:'😶',l:'모르겠어'},{e:'🚪',l:'안 돼'}], shk: false },
+      { text: '"왜 고민해?!"', emoji: '😡', time: 3500,
+        options: [{e:'🤝',l:'진정해'},{e:'😶',l:'...'},{e:'🚪',l:'무서워'}], shk: true },
+      { text: '"다시 시작하면 되잖아!!"', emoji: '😤', time: 3000,
+        options: [{e:'🤝',l:'잠깐만'},{e:'🚪',l:'도망'}], shk: true },
+      { text: '(팔을 잡는다)', emoji: '😡', time: 2000,
+        options: [{e:'✋',l:'밀친다'}], shk: true },
+    ];
+
+    const bgColors = [
+      'linear-gradient(135deg, #2d3436 0%, #4a1a1a 100%)',
+      'linear-gradient(135deg, #3a1515 0%, #5a1a1a 100%)',
+      'linear-gradient(135deg, #4a0a0a 0%, #6a0a0a 100%)',
+      'linear-gradient(135deg, #5a0000 0%, #7a0000 100%)',
+      'linear-gradient(135deg, #6a0000 0%, #000000 100%)',
+    ];
+
+    let currentRound = 0;
+    let animFrame = null;
+
+    function renderRound() {
+      const r = rounds[currentRound];
+      wrap.innerHTML = '';
+      bg.style.background = bgColors[currentRound];
+
+      if (r.shk) doShake();
+
+      // Round info
+      const info = document.createElement('div');
+      info.className = 'confront-round-info';
+      info.textContent = `${currentRound + 1} / ${rounds.length}`;
+      wrap.appendChild(info);
+
+      // Timer ring + face
+      const timerWrap = document.createElement('div');
+      timerWrap.className = 'confront-timer-wrap';
+      const ring = document.createElement('div');
+      ring.className = 'confront-timer-ring';
+      ring.style.setProperty('--angle', '360deg');
+      const face = document.createElement('div');
+      face.className = 'confront-face';
+      face.textContent = r.emoji;
+      ring.appendChild(face);
+      timerWrap.appendChild(ring);
+      wrap.appendChild(timerWrap);
+
+      // Dialogue
+      const dlg = document.createElement('div');
+      dlg.className = 'confront-dialogue';
+      dlg.textContent = r.text;
+      wrap.appendChild(dlg);
+
+      // Options
+      const optsWrap = document.createElement('div');
+      optsWrap.className = 'confront-options';
+      r.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'confront-btn';
+        btn.innerHTML = `<span>${opt.e}</span><span class="confront-btn-label">${opt.l}</span>`;
+        btn.addEventListener('click', () => selectOption());
+        optsWrap.appendChild(btn);
+      });
+      wrap.appendChild(optsWrap);
+
+      // Timer
+      const startTime = Date.now();
+      let done = false;
+      function tick() {
+        if (done) return;
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, 1 - elapsed / r.time);
+        ring.style.setProperty('--angle', `${remaining * 360}deg`);
+        if (remaining <= 0) {
+          done = true;
+          selectOption();
+          return;
+        }
+        animFrame = requestAnimationFrame(tick);
+      }
+      animFrame = requestAnimationFrame(tick);
+
+      function selectOption() {
+        if (done && animFrame) return;
+        done = true;
+        cancelAnimationFrame(animFrame);
+        currentRound++;
+        if (currentRound >= rounds.length) {
+          wrap.innerHTML = '';
+          setTimeout(() => onComplete(), 300);
+        } else {
+          setTimeout(() => renderRound(), 600);
+        }
+      }
+    }
+
+    container.appendChild(wrap);
+    renderRound();
+  },
+
+  // ─── ⑤ Result Dashboard ───
+  result_detail(container, onComplete) {
+    const wrap = document.createElement('div');
+    wrap.className = 'result-puzzle';
+
+    bg.style.background = 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ff9a9e 100%)';
+
+    // Score counter
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'result-score-big';
+    scoreBig.textContent = '0';
+    wrap.appendChild(scoreBig);
+
+    const scorePercent = document.createElement('div');
+    scorePercent.className = 'result-score-percent';
+    scorePercent.textContent = '%';
+    wrap.appendChild(scorePercent);
+
+    const avgText = document.createElement('div');
+    avgText.className = 'result-avg-text';
+    avgText.textContent = '';
+    wrap.appendChild(avgText);
+
+    // Detail button
+    const detailBtn = document.createElement('button');
+    detailBtn.className = 'result-detail-btn';
+    detailBtn.textContent = '상세 결과 보기';
+    detailBtn.style.display = 'none';
+    wrap.appendChild(detailBtn);
+
+    // Categories
+    const catsWrap = document.createElement('div');
+    catsWrap.className = 'result-categories';
+    catsWrap.style.display = 'none';
+
+    const cats = [
+      { emoji: '💜', name: '신체적 적응력', score: 72, color: '#a855f7', desc: '서로 다른 모습에서도 사랑 유지' },
+      { emoji: '🐕', name: '비언어적 유대감', score: 85, color: '#56ab2f', desc: '말 없이 마음 전달' },
+      { emoji: '⚖️', name: '극한 상황 내성', score: 38, color: '#ff6b6b', desc: '극단적 상황에서 관계 유지' },
+    ];
+
+    let revealed = 0;
+
+    cats.forEach(cat => {
+      const el = document.createElement('div');
+      el.className = 'result-cat';
+      el.innerHTML = `
+        <div class="result-cat-header">
+          <span class="result-cat-name">${cat.emoji} ${cat.name}</span>
+          <span class="result-cat-score">${cat.score}%</span>
+        </div>
+        <div class="result-cat-bar"><div class="result-cat-fill" style="background:${cat.color}"></div></div>
+      `;
+      el.addEventListener('click', () => {
+        if (el.classList.contains('revealed')) return;
+        el.classList.add('revealed');
+        el.querySelector('.result-cat-fill').style.width = cat.score + '%';
+        revealed++;
+        if (revealed >= cats.length) {
+          setTimeout(() => {
+            summary.classList.add('visible');
+            exitBtn.classList.add('visible');
+          }, 800);
+        }
+      });
+      catsWrap.appendChild(el);
+    });
+    wrap.appendChild(catsWrap);
+
+    // Summary
+    const summary = document.createElement('div');
+    summary.className = 'result-summary';
+    summary.textContent = '종합: 65% — 평균보다 높습니다! 🎉';
+    wrap.appendChild(summary);
+
+    // Exit button
+    const exitBtn = document.createElement('button');
+    exitBtn.className = 'result-exit';
+    exitBtn.textContent = '나가기';
+    exitBtn.addEventListener('click', () => onComplete());
+    wrap.appendChild(exitBtn);
+
+    container.appendChild(wrap);
+
+    // Count up animation
+    let current = 0;
+    const target = 65;
+    const step = 2000 / target;
+    function countUp() {
+      if (current <= target) {
+        scoreBig.textContent = current;
+        current++;
+        setTimeout(countUp, step);
+      } else {
+        createConfetti();
+        doFlash();
+        avgText.textContent = '커플 평균 64% — 평균보다 높은 점수입니다!';
+        detailBtn.style.display = 'block';
+      }
+    }
+    countUp();
+
+    detailBtn.addEventListener('click', () => {
+      detailBtn.style.display = 'none';
+      catsWrap.style.display = 'flex';
+    });
+  }
+};
+
+// ═══════════════════════════════════════
+//  SCENE DATA
+// ═══════════════════════════════════════
+const scenes = [
+  // ═══ PROLOGUE ═══
+  { portraits: { heroine: '👩', hero: '🧑', system: '🖥️' } },
+  { bg: 'linear-gradient(135deg, #e8a87c 0%, #d3734a 50%, #c8553d 100%)', desc: '🎪 축제 거리' },
+  { type: NARRATOR, text: '화려한 축제의 불빛 속, 우리는 손을 잡고 거리를 걸었다.' },
+  { type: NARRATOR, text: '여기저기서 맛있는 냄새가 나고, 웃음소리가 넘쳐나는 즐거운 밤이었다.' },
+
+  // ─── Festival Exploration ───
+  { explore: 'festival_street' },
+
+  { type: NARRATOR, text: '그때, 한쪽 구석에 좀 허름한 천막 부스가 눈에 들어왔다.' },
+  { type: NARRATOR, text: "현수막에는 이렇게 적혀있었다.\n\n'AI가 봐주는 커플 궁합! 서로의 사랑의 크기가 궁금하신가요?'" },
+  { type: HERO, text: '야, 이거 재밌겠다! 우리 해볼까?' },
+  { type: HEROINE, text: '뭐야 이거... 좀 수상한데? 그래도 재밌겠다, 들어가보자!' },
+
+  // ─── Tent Exploration ───
+  { bg: 'linear-gradient(135deg, #2d2438 0%, #1a1625 100%)', desc: '🏮 천막 내부', fade: true },
+  { explore: 'tent_interior' },
+
+  // After sitting
+  { type: SYSTEM, text: '환영합니다. 장비를 착용하고 원하는 메뉴를 선택해주세요.' },
+  { type: NARRATOR, text: '갑자기 기계에서 나온 목소리에 둘 다 깜짝 놀라 서로를 보며 웃었다.' },
+  { type: HEROINE, text: '뭐야, 놀랐잖아! 하하.' },
+  { type: HERO, text: '자동 안내인가보다. 자, 써보자!' },
+  { type: NARRATOR, text: '장비를 착용하자 눈앞에 메뉴가 떠올랐다.\n현수막에서 봤던 [사랑의 크기 테스트]를 선택했다.' },
+  { type: SYSTEM, text: '과연 내 알맹이는 그대로인데 껍데기만 다르다면??\n우리의 상황이 지금과 많이 달라진다면??\n\n내 옆에 있는 사람은 나를 계속 사랑할 수 있을까요?' },
+  { type: SYSTEM, text: '단순히 재미 용도로 생각하면 오산!\n꽤 정확한 결과를 얻을 수 있습니다.' },
+  { type: SYSTEM, text: '*체험자의 데이터로 시뮬레이션을 돌리기 때문에\n가상현실 속 1일은 현실의 0.001초와 비슷합니다.' },
+  { type: HEROINE, text: '뭔가 좀 오싹한데...?' },
+  { type: HERO, text: '괜찮아, 그냥 게임인데 뭐. 시작하자!' },
+  { type: NARRATOR, text: '시작 버튼을 누르자 눈앞이 캄캄해졌다.' },
+
+  // ═══ TEST 1 — Gender Swap ═══
+  { portraits: { heroine: '🧑', hero: '👩' } },
+  { bg: 'linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f472b6 100%)', desc: '테스트 1', fade: true },
+  { type: NARRATOR, text: '......' },
+  { cg: '👩🔄🧑' },
+  { type: NARRATOR, text: '정신을 차려보니 내 손을 잡고 있는 사람은—\n내 남자친구가 아니라 어떤 여자였다.' },
+  { type: HEROINE, text: '억?!' },
+  { type: NARRATOR, text: '소리를 지르며 손을 뗐는데, 그 여자도 똑같이 놀란다.' },
+  { type: NARRATOR, text: '이상하게 키가 크고 덩치가 큰 그 여자.\n잘 살펴보니... 남자친구의 얼굴과 매우 닮았다.' },
+  { type: HEROINE, text: '아, 우리 지금 가상현실에 있는 거야? 깜짝이야.' },
+  { type: HERO, text: '그런 거야? 나도 깜짝 놀랐어. 진짜 같다.' },
+  { type: HEROINE, text: '난 너한테 바람피는 여자라도 생기는 스토리인 줄 알았는데...\n그게 아니라 네가 여자가 되는 거였네.' },
+  { type: HERO, text: '나만 여자가 된 게 아니라 너도...' },
+  { type: NARRATOR, text: '무슨 소리지? 그러고 보니 내 목소리가 이상하게 들린다.' },
+  { type: HEROINE, text: '나도 남자가 된 거야?? 진짜 신기하다!' },
+
+  // ─── Gender Check Exploration ───
+  { explore: 'gender_check' },
+
+  { type: NARRATOR, text: '서로의 모습을 확인했다.\n겉모습은 거의 똑같은데, 성별의 외형적 특징만 달라져 있었다.' },
+  { type: NARRATOR, text: '머리 길이는 그대로. 하지만 턱선, 체형, 모든 것이 미묘하게 달랐다.' },
+  { type: NARRATOR, text: '가상현실의 성별대로 외형을 바꿔야 할지, 그대로 유지할지 고민이 됐다.' },
+  { type: HERO, text: '그래도 넌 내 여자친구니까...\n지금은 남자이긴 하지만 스타일은 여자로 유지했으면 좋겠어.' },
+  { type: HEROINE, text: '......' },
+
+  // ─── Puzzle ① Mirror Dressing ───
+  { puzzle: 'mirror_dressing' },
+
+  { type: NARRATOR, text: '결국 작은 갈등 끝에 둘 다 외형을 바꿨다.' },
+  { type: NARRATOR, text: '그리고 놀랍게도— 적응하고 나니 꽤 즐거웠다.' },
+  { type: NARRATOR, text: '성별이 바뀐 채로 데이트를 시작했다.' },
+
+  // ─── Date Montage Exploration ───
+  { explore: 'date_montage' },
+
+  { cg: '🌙😔' },
+  { type: NARRATOR, text: '하지만 밤이 되고... 분위기가 달라졌다.' },
+  { type: NARRATOR, text: '성관계를 가지려고 했는데, 포지션을 어떻게 해야 할지 고민하는 중—' },
+  { type: NARRATOR, text: '남자친구가 머뭇거렸다.' },
+  { type: HEROINE, text: '...왜? 왜 그래?' },
+  { type: NARRATOR, text: '......' },
+  { type: HERO, text: '이건 도저히 못하겠어.' },
+  { type: HERO, text: '널 사랑해. 하지만 난 원래 남자라고.\n이런 건... 싫어!' },
+  { type: NARRATOR, text: '그의 목소리에는 진심이 담겨있었다.\n나도 사실... 조금은 이해할 수 있었다.' },
+
+  // ═══ Between Test 1 & 2 ═══
+  { cg: '' },
+  { portraits: { heroine: '👩', hero: '🧑' } },
+  { bg: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', desc: '', fade: true },
+  { type: SYSTEM, text: '테스트가 종료되었습니다.\n다음 테스트를 진행하시겠습니까?' },
+  { type: HERO, text: '와, 이거 진짜 실감난다. 어때? 계속해볼래?' },
+  { type: HEROINE, text: '그래 좋아. 다음엔 어떤 게 나올지 무섭다.' },
+
+  // ═══ TEST 2 — Puppy ═══
+  { portraits: { heroine: '🐕', hero: '🧑' } },
+  { bg: 'linear-gradient(135deg, #56ab2f 0%, #a8e063 50%, #dce35b 100%)', desc: '테스트 2', fade: true },
+  { type: NARRATOR, text: '누워있다가 눈을 떠서 몸을 일으켰는데—\n뭔가 잘못되었다는 걸 바로 알았다.' },
+  { type: NARRATOR, text: '내 시야는 무릎만큼 낮았고, 두 다리로 설 수 없었다.' },
+  { type: HERO, text: '너야...?' },
+  { type: NARRATOR, text: '"낑낑"' },
+  { cg: '🐕💭❓' },
+  { type: NARRATOR, text: '말도 안 나왔다.\n나는... 남자친구의 강아지가 되어있었다.' },
+  { type: HERO, text: '잠깐, 대화도 안 통하는데 어떻게 서로 교감을 하고\n사랑을 테스트하겠다는 건데?!' },
+  { type: NARRATOR, text: '너보다 내가 더 답답하다고...' },
+
+  // ─── Puppy House Exploration ───
+  { explore: 'puppy_house' },
+
+  // ─── Puzzle ② Puppy Communication ───
+  { puzzle: 'puppy_comm' },
+
+  // ═══ Between Test 2 & 3 ═══
+  { cg: '' },
+  { portraits: { heroine: '👩', hero: '🧑' } },
+  { bg: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', desc: '', fade: true },
+  { type: SYSTEM, text: '테스트가 종료되었습니다.\n다음 테스트를 진행하시겠습니까?' },
+  { type: HERO, text: '야, 방금 건 무효야!\n이건 남녀 간의 사랑이 아니라 생명체 간의 사랑이잖아!\n난 이걸 테스트하려는 게 아니라고.' },
+  { type: HEROINE, text: '그치만 난 너한테 진짜 사랑을 느꼈는걸?\n많은 것을 희생하더라도 널 지켜주고 싶었고,\n네가 죽을 때까지 곁에 있겠다고 다짐했어.' },
+  { type: HERO, text: '나는 강아지였다고.\n나에게 자유는 아무것도 없었어.\n네가 주는 사랑만 받을 뿐이지.\n내가 선택할 수 있는 게 아무것도 없잖아!' },
+  { choice: true, options: [
+    { text: '"...그래도 사랑은 사랑이야. 형태가 달라도."' },
+    { text: '"네 말도 맞아. 대등하지 않은 관계였어."' },
+    { text: '"그건 네 입장이고, 내 입장에선 진심이었어."' },
+  ]},
+  { type: NARRATOR, text: '어쨌든 남자친구는 진짜 사랑을 했다고 우기고,\n나는 찜찜한 마음을 안은 채 다음 테스트로 넘어갔다.' },
+  { type: HEROINE, text: '이게 마지막인가 봐.\n제발 이번엔 사람으로 살게 해줘...' },
+
+  // ═══ TEST 3 — Father & Daughter ═══
+  { portraits: { heroine: '👩', hero: '👴' } },
+  { bg: 'linear-gradient(135deg, #434343 0%, #6b6b6b 50%, #8e8e8e 100%)', desc: '테스트 3', fade: true },
+  { type: NARRATOR, text: '다행히 이번에는 사람이다.\n내 모습도 원래 그대로.' },
+  { type: SYSTEM, text: '네, 확인되셨습니다.' },
+  { type: NARRATOR, text: '안내원이 건네준 종이에는 가족관계증명서가 인쇄되어 있었다.' },
+  { type: NARRATOR, text: '그제서야 남자친구의 얼굴을 확인했다.\n30년은 더 산 듯한, 중년의 얼굴.' },
+  { cg: '👨‍👧📋' },
+  { type: HEROINE, text: '뭐? 이번엔... 부녀지간이야?' },
+  { type: NARRATOR, text: '처음엔 말도 안 되는 상황에 둘 다 경악했다.' },
+  { type: NARRATOR, text: '하지만 테스트를 잘 통과하고 싶어서,\n일부러라도 사랑을 느끼려고 노력했다.' },
+  { type: NARRATOR, text: '부녀지간이라는 상황 때문에\n자꾸 본능적 거부감이 들었지만...' },
+  { type: NARRATOR, text: '그래도 둘은 노력했다.\n아버지로서, 딸로서의 사랑을 진심으로 느끼려고.' },
+  { type: NARRATOR, text: '그리고 어떤 사건을 계기로—\n남자친구가 나에게 이성적 사랑을 느끼는 순간이 왔다.' },
+
+  // Arrest
+  { cg: '' },
+  { bg: 'linear-gradient(135deg, #1a1a1a 0%, #2d1b1b 50%, #1a1a1a 100%)', desc: '', shake: true },
+  { cg: '🚨👮' },
+  { type: NARRATOR, text: '갑자기——' },
+  { type: NARRATOR, text: '체험 기구가 벗겨지고, 경찰이 들이닥쳤다.' },
+  { type: NARRATOR, text: '알고 보니 아동성범죄자를 잡아내기 위해\n이런 장치를 사용한 것이었다.' },
+  { type: NARRATOR, text: '우리는 일부러 서로에게 사랑을 느끼려고\n더 노력한 것뿐인데...\n\n너무나 억울했다.' },
+
+  // Prison
+  { cg: '' },
+  { portraits: { heroine: '👩', hero: '🧑' } },
+  { bg: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%)', desc: '🔒 감옥', fade: true },
+  { cg: '🔒😔' },
+  { type: NARRATOR, text: '남자친구는 감옥에 들어갔다.' },
+  { type: NARRATOR, text: '나는 꾸준히 면회를 갔다.' },
+
+  // ─── Prison Visit Exploration ───
+  { explore: 'prison_visit' },
+
+  { type: NARRATOR, text: '꺼내주려고 아주 많은 노력을 했지만,\n아동성범죄는 형량이 세서 쉽지 않았다.' },
+
+  // ─── Puzzle ③ Evidence Board ───
+  { puzzle: 'evidence_board' },
+
+  { type: NARRATOR, text: '슬프긴 했지만...\n결혼한 것도 아니고, 솔직히 점점 지쳐갔다.' },
+  { type: NARRATOR, text: '그는 어이없게 범죄자 신세가 되어\n너무 답답하고 억울해했다.' },
+
+  // 3 years
+  { cg: '' },
+  { bg: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)', desc: '⏳ 3년 후' },
+  { type: NARRATOR, text: '3년이 흘렀다.' },
+  { type: NARRATOR, text: '남자친구는 희망이 거의 없다는 걸 깨달았고,\n나를 점점 비난하기 시작했다.' },
+  { type: NARRATOR, text: '내가 잘못한 게 아니라는 걸 알면서도,\n자기 상황이 너무 척박하니까 누구라도 탓하게 된 거였다.' },
+  { type: NARRATOR, text: '나도 그런 그를 보면서 지쳐갔다.' },
+  { type: NARRATOR, text: '그러다 그가 도를 넘는 말을 했다.' },
+  { type: HERO, text: '이게 다 네 탓이야.\n네가 그때 그 테스트를 하자고 안 했으면—!' },
+  { type: NARRATOR, text: '그동안 다 들어주다가, 나도 결국 폭발했다.' },
+  { type: HEROINE, text: '너랑 나랑 결혼한 사이도 아니고,\n우린 고작 5개월 만난 사이야.' },
+  { type: HEROINE, text: '그래도 난 너를 생각해서\n이리저리 뛰어다니며 널 꺼낼 방법을 찾아다녔어.' },
+  { type: HEROINE, text: '근데 넌 이렇게도 배려가 없니?' },
+  { type: HEROINE, text: '그 날 테스트 결과는 알지 못한 채 끝났지만...\n\n널 보면 그 결과를 안 봐도 알 수 있을 것 같네.' },
+  { type: NARRATOR, text: '그렇게 쏘아붙이고 나왔다.' },
+
+  // Release
+  { bg: 'linear-gradient(135deg, #2d3436 0%, #636e72 100%)', desc: '' },
+  { type: NARRATOR, text: '그런데 기적적으로—\n그 기계가 법적 문제에 휘말리게 되면서\n남자친구가 감옥을 나올 수 있게 됐다.' },
+  { type: NARRATOR, text: '관계가 악화되긴 했지만,\n다행이라고 생각했다.' },
+  { type: NARRATOR, text: '하지만 솔직히... 나에게는 관심 있는 사람이 생겼다.\n너무 힘든 일을 겪어서 누군가에게 의지하고 싶었고,\n3년이란 시간은 충분히 오래 노력한 시간이었으니까.' },
+  { type: NARRATOR, text: '그리고 감옥을 나온 남자친구는—\n다른 여자를 만날 수 있다는 생각에\n바로 방탕한 생활을 시작했다.' },
+  { type: NARRATOR, text: '...기막혔다.' },
+  { type: NARRATOR, text: '하지만 어차피 우리 관계는 예전 같지 않았고,\n나도 나의 삶을 살기로 했다.' },
+
+  // Encounter
+  { bg: 'linear-gradient(135deg, #2d3436 0%, #4a1a1a 100%)', desc: '', shake: true },
+  { type: NARRATOR, text: '그러다 길에서 우연히 마주쳤다.' },
+  { type: HERO, text: '우린 싸워서 잠시 시간을 갖는 중이었는데—\n바람을 피다니!' },
+  { type: HEROINE, text: '너도 여자 만나잖아!' },
+  { type: HERO, text: '그건 이거랑 다르지!' },
+  { type: NARRATOR, text: '자꾸 화만 내는 그를 진정시키려고\n조용한 공터로 갔다.' },
+
+  // ─── Empty Lot Exploration ───
+  { explore: 'empty_lot' },
+
+  // ─── Puzzle ④ Confrontation ───
+  { puzzle: 'confrontation' },
+
+  // Death
+  { bg: 'linear-gradient(135deg, #000000 0%, #1a0000 50%, #000000 100%)', shake: true },
+  { cg: '🩸💀' },
+  { type: NARRATOR, text: '몸싸움을 하다가 그를 밀쳤는데—' },
+  { type: NARRATOR, text: '공사 장비에 머리를 부딪힌 남자친구.' },
+  { type: NARRATOR, text: '피를 흘리며 나에게 손을 뻗었다.' },
+  { type: NARRATOR, text: '......' },
+  { type: NARRATOR, text: '맥박이 없었다.' },
+  { type: NARRATOR, text: '그렇게 그가 눈을 감았다.' },
+
+  // ═══ RESULT ═══
+  { cg: '' },
+  { portraits: { heroine: '👩', hero: '🧑' } },
+  { bg: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', desc: '', fade: true },
+  { type: SYSTEM, text: '테스트가 종료되었습니다.' },
+  { type: NARRATOR, text: '...눈을 떴다.' },
+  { type: NARRATOR, text: '우리는 축제의 천막 안에 있었다.' },
+  { type: NARRATOR, text: '둘 다 어안이 벙벙하고 실감이 나지 않아,\n당황한 얼굴로 기계를 벗었다.' },
+
+  // ─── Puzzle ⑤ Result Dashboard ───
+  { puzzle: 'result_detail' },
+
+  // ═══ EPILOGUE ═══
+  { bg: 'linear-gradient(135deg, #606c88 0%, #3f4c6b 50%, #2c3e50 100%)', desc: '', fade: true },
+  { type: NARRATOR, text: '화면에는 65라는 숫자가 떠있고,\n배경에 빵빠레와 축포 그림이 계속해서 터지고 있었다.' },
+  { type: NARRATOR, text: '그 발랄한 축하 연출이\n어째서인지 잔인하게 느껴졌다.' },
+  { type: NARRATOR, text: '서로를 잠시 바라보았다.' },
+  { type: NARRATOR, text: '아무 말도 나오지 않았다.' },
+  { choice: true, options: [
+    { text: '"...나가자."' },
+    { text: '(아무 말 없이 짐을 챙긴다)' },
+  ]},
+  { type: NARRATOR, text: '내가 먼저 짐을 챙겨서 천막을 나섰다.' },
+  { bg: 'linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #4a6741 100%)' },
+  { type: NARRATOR, text: '남자친구는 멍한 얼굴로\n기계에서 나오는 발랄한 축하 음악을 듣다가—' },
+  { type: NARRATOR, text: '내가 간 길을 따라 나섰다.' },
+  { bg: 'linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%)' },
+  { type: NARRATOR, text: '축제의 불빛이 저 멀리서 반짝였다.' },
+  { type: NARRATOR, text: '둘은 아주 오랫동안\n한 마디 말도 하지 않았다.' },
+  { type: NARRATOR, text: '......' },
+  { type: NARRATOR, text: '\n\n— 끝 —' },
+  { end: true },
+];
+
+// ═══════════════════════════════════════
+//  MAIN GAME LOOP
+// ═══════════════════════════════════════
+function processLine() {
+  if (currentLine >= scenes.length) return;
+  const line = scenes[currentLine];
+
+  // End
+  if (line.end) { showEnding(); return; }
+
+  // Portrait change
+  if (line.portraits) {
+    currentPortraits = { ...currentPortraits, ...line.portraits };
+    currentLine++;
+    processLine();
+    return;
+  }
+
+  // CG display
+  if (line.cg !== undefined && !line.type && !line.bg) {
+    if (line.cg) showCg(line.cg); else hideCg();
+    currentLine++;
+    processLine();
+    return;
+  }
+
+  // Puzzle
+  if (line.puzzle) {
+    enterInteractiveMode(() => {
+      puzzles[line.puzzle](puzzleContainer, () => exitInteractiveMode());
+    });
+    return;
+  }
+
+  // Exploration
+  if (line.explore) {
+    enterInteractiveMode(() => {
+      explorations[line.explore](puzzleContainer, () => exitInteractiveMode());
+    });
+    return;
+  }
+
+  // Background change
+  if (line.bg) {
+    const hasFade = line.fade;
+    const hasShake = line.shake;
+    const desc = line.desc;
+
+    if (hasFade) {
+      canAdvance = false;
+      doFade(() => {
+        setBg(line.bg);
+        if (desc !== undefined) setSceneDesc(desc);
+      });
+      if (!line.type && !line.choice) {
+        currentLine++;
+        setTimeout(() => processLine(), 1200);
+        return;
+      } else {
+        setTimeout(() => showDialogue(line), 1200);
+        return;
+      }
+    }
+
+    if (hasShake) {
+      setBg(line.bg);
+      if (desc !== undefined) setSceneDesc(desc);
+      doShake();
+      if (!line.type && !line.choice) {
+        currentLine++;
+        setTimeout(() => processLine(), 400);
+        return;
+      }
+    }
+
+    if (!hasFade && !hasShake) {
+      setBg(line.bg);
+      if (desc !== undefined) setSceneDesc(desc);
+      if (!line.type && !line.choice) {
+        currentLine++;
+        processLine();
+        return;
+      }
+    }
+  }
+
+  // Choice
+  if (line.choice) { showChoices(line.options); return; }
+
+  // Dialogue
+  if (line.type) { showDialogue(line); return; }
+
+  // Fallback
+  currentLine++;
+  processLine();
+}
+
+function showDialogue(line) {
+  speakerEl.textContent = speakerName(line.type);
+  speakerEl.className = line.type || '';
+  showPortrait(line.type);
+  if (line.shake) doShake();
+  typeText(line.text);
+}
+
+function advance() {
+  if (waitingForChoice || waitingForPuzzle) return;
+  if (typing) { skipTyping(); return; }
+  if (!canAdvance) return;
+  canAdvance = false;
+  currentLine++;
+  processLine();
+}
+
+function showEnding() {
+  textArea.textContent = '';
+  speakerEl.textContent = '';
+  speakerEl.className = '';
+  continueInd.style.visibility = 'hidden';
+  bg.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+  sceneDesc.classList.remove('visible');
+  setTimeout(() => {
+    textArea.innerHTML = '<div style="text-align:center; margin-top:2rem; color:rgba(255,255,255,0.4);">화면을 클릭하면 처음부터 다시 시작합니다.</div>';
+    canAdvance = false;
+    const restartHandler = () => {
+      document.removeEventListener('click', restartHandler);
+      currentLine = 0;
+      startGame();
+    };
+    setTimeout(() => document.addEventListener('click', restartHandler), 1000);
+  }, 2000);
+}
+
+// ═══════════════════════════════════════
+//  EVENT LISTENERS
+// ═══════════════════════════════════════
+document.addEventListener('click', e => {
+  if (!gameStarted) return;
+  if (waitingForChoice || waitingForPuzzle) return;
+  advance();
+});
+
+document.addEventListener('keydown', e => {
+  if (!gameStarted) return;
+  if (e.code === 'Space' || e.code === 'Enter') {
+    e.preventDefault();
+    if (waitingForChoice || waitingForPuzzle) return;
+    advance();
+  }
+});
+
+// ═══════════════════════════════════════
+//  START
+// ═══════════════════════════════════════
+function startGame() {
+  gameStarted = false;
+  puzzleContainer.classList.remove('active');
+  puzzleContainer.innerHTML = '';
+  dialogueBox.classList.remove('slide-down');
+  sceneDesc.classList.remove('visible');
+  titleScreen.style.display = 'flex';
+  fade.classList.add('hidden');
+  currentLine = 0;
+  typing = false;
+  canAdvance = false;
+  waitingForChoice = false;
+  waitingForPuzzle = false;
+  textArea.textContent = '';
+  speakerEl.textContent = '';
+  speakerEl.className = '';
+  bg.style.background = '#1a1a2e';
+  continueInd.style.visibility = 'hidden';
+  hideCg();
+  portraitEl.classList.remove('active');
+  portraitEl.textContent = '';
+  currentPortraits = { heroine: '👩', hero: '🧑', system: '🖥️' };
+
+  const startHandler = () => {
+    titleScreen.removeEventListener('click', startHandler);
+    titleScreen.style.display = 'none';
+    gameStarted = true;
+    fade.classList.remove('hidden');
+    setTimeout(() => {
+      processLine();
+      setTimeout(() => fade.classList.add('hidden'), 200);
+    }, 500);
+  };
+  titleScreen.addEventListener('click', startHandler);
+}
+
+startGame();
+</script>
+</body>
+</html>
