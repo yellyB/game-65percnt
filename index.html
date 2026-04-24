@@ -743,6 +743,25 @@ body {
   letter-spacing: 0.1em;
 }
 
+/* ─── Gauge Popup ─── */
+.gauge-popup {
+  position: fixed;
+  top: 12px;
+  right: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  z-index: 92;
+  pointer-events: none;
+  animation: gauge-popup-anim 1.2s ease-out forwards;
+}
+.gauge-popup.positive { color: rgba(100,255,200,0.9); }
+.gauge-popup.negative { color: rgba(255,100,100,0.9); }
+@keyframes gauge-popup-anim {
+  0% { opacity: 1; transform: translateY(0); }
+  70% { opacity: 1; transform: translateY(-15px); }
+  100% { opacity: 0; transform: translateY(-25px); }
+}
+
 /* ─── Relationship Gauge ─── */
 #relationship-gauge {
   position: absolute;
@@ -1048,6 +1067,14 @@ function updateGauge(delta) {
     if (relationshipGauge < 30) label.style.color = 'rgba(255,100,100,0.6)';
     else if (relationshipGauge >= 80) label.style.color = 'rgba(100,255,200,0.6)';
     else label.style.color = 'rgba(255,255,255,0.4)';
+  }
+  // Popup feedback
+  if (delta !== 0) {
+    const popup = document.createElement('div');
+    popup.className = 'gauge-popup ' + (delta > 0 ? 'positive' : 'negative');
+    popup.textContent = (delta > 0 ? '+' : '') + delta;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 1200);
   }
 }
 
@@ -1883,15 +1910,15 @@ const puzzles = {
 
     const rounds = [
       { text: '"난 널 아직 사랑해"', emoji: '😊', time: 5000,
-        options: [{e:'❤️',l:'나도'},{e:'😶',l:'침묵'},{e:'🚪',l:'그만하자'}], shk: false },
+        options: [{e:'❤️',l:'나도',g:3},{e:'😶',l:'침묵',g:0},{e:'🚪',l:'그만하자',g:-3}], shk: false },
       { text: '"다시 시작하자"', emoji: '🥺', time: 4000,
-        options: [{e:'❤️',l:'생각해볼게'},{e:'😶',l:'모르겠어'},{e:'🚪',l:'안 돼'}], shk: false },
+        options: [{e:'❤️',l:'생각해볼게',g:2},{e:'😶',l:'모르겠어',g:0},{e:'🚪',l:'안 돼',g:-2}], shk: false },
       { text: '"왜 고민해?!"', emoji: '😡', time: 3500,
-        options: [{e:'🤝',l:'진정해'},{e:'😶',l:'...'},{e:'🚪',l:'무서워'}], shk: true },
+        options: [{e:'🤝',l:'진정해',g:2},{e:'😶',l:'...',g:-1},{e:'🚪',l:'무서워',g:-3}], shk: true },
       { text: '"다시 시작하면 되잖아!!"', emoji: '😤', time: 3000,
-        options: [{e:'🤝',l:'잠깐만'},{e:'🚪',l:'도망'}], shk: true },
+        options: [{e:'🤝',l:'잠깐만',g:1},{e:'🚪',l:'도망',g:-2}], shk: true },
       { text: '(팔을 잡는다)', emoji: '😡', time: 2000,
-        options: [{e:'✋',l:'밀친다'}], shk: true },
+        options: [{e:'✋',l:'밀친다',g:-2}], shk: true },
     ];
 
     const bgColors = [
@@ -1944,7 +1971,7 @@ const puzzles = {
         const btn = document.createElement('button');
         btn.className = 'confront-btn';
         btn.innerHTML = `<span>${opt.e}</span><span class="confront-btn-label">${opt.l}</span>`;
-        btn.addEventListener('click', () => selectOption());
+        btn.addEventListener('click', () => selectOption(opt));
         optsWrap.appendChild(btn);
       });
       wrap.appendChild(optsWrap);
@@ -1959,17 +1986,18 @@ const puzzles = {
         ring.style.setProperty('--angle', `${remaining * 360}deg`);
         if (remaining <= 0) {
           done = true;
-          selectOption();
+          selectOption(r.options[r.options.length - 1]);
           return;
         }
         animFrame = requestAnimationFrame(tick);
       }
       animFrame = requestAnimationFrame(tick);
 
-      function selectOption() {
+      function selectOption(opt) {
         if (done && animFrame) return;
         done = true;
         cancelAnimationFrame(animFrame);
+        if (opt && opt.g) updateGauge(opt.g);
         currentRound++;
         if (currentRound >= rounds.length) {
           wrap.innerHTML = '';
