@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>커플 궁합 테스트</title>
+<title>사랑을 측정합니다</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
@@ -743,6 +743,97 @@ body {
   letter-spacing: 0.1em;
 }
 
+/* ─── Relationship Gauge ─── */
+#relationship-gauge {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  z-index: 90;
+  overflow: hidden;
+}
+#gauge-fill {
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+  border-radius: 0 2px 2px 0;
+  transition: width 0.8s ease;
+}
+#gauge-label {
+  position: absolute;
+  top: 6px; right: 10px;
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.4);
+  z-index: 91;
+  transition: color 0.5s;
+  pointer-events: none;
+}
+
+/* ─── Thought Choices ─── */
+.thought-prompt {
+  color: rgba(200,180,255,0.7);
+  font-size: 1rem;
+  font-style: italic;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.thought-btn {
+  width: 100%; max-width: 500px;
+  padding: 1rem 1.5rem;
+  background: rgba(160,120,255,0.05);
+  border: 1px solid rgba(160,120,255,0.4);
+  border-radius: 8px;
+  color: rgba(200,180,255,0.9);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  font-style: italic;
+}
+.thought-btn:hover, .thought-btn:active {
+  background: rgba(160,120,255,0.15);
+  border-color: rgba(160,120,255,0.7);
+  transform: scale(1.02);
+}
+
+/* ─── Timed Choice ─── */
+.timed-choice-wrap {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  z-index: 20;
+  padding: 2rem;
+}
+.timed-choice-timer-ring {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #ff4444 var(--angle, 360deg),
+    rgba(255,255,255,0.1) var(--angle, 360deg)
+  );
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 0.5rem;
+}
+.timed-choice-timer-inner {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.9);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: #fff; font-weight: 700;
+}
+.timed-choice-prompt {
+  color: rgba(255,255,255,0.8);
+  font-size: 1rem;
+  text-align: center;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 600px) {
   #dialogue-box { height: 40%; }
@@ -758,12 +849,16 @@ body {
   #scene-cg { width: 200px; height: 140px; font-size: 2.8rem; top: 5%; }
   .explore-header-img { width: 180px; height: 120px; font-size: 2.5rem; }
   #portrait { width: 38px; height: 38px; font-size: 1.2rem; }
+  .timed-choice-timer-ring { width: 70px; height: 70px; }
+  .timed-choice-timer-inner { width: 56px; height: 56px; font-size: 1.3rem; }
 }
 </style>
 </head>
 <body>
 <div id="game">
   <div id="bg"></div>
+  <div id="relationship-gauge"><div id="gauge-fill"></div></div>
+  <div id="gauge-label">보통</div>
   <div id="scene-desc"><div id="scene-desc-text"></div></div>
   <div id="scene-cg"></div>
   <div id="puzzle-container"></div>
@@ -779,8 +874,8 @@ body {
   <div id="fade"></div>
   <div id="flash"></div>
   <div id="title-screen">
-    <h1>커플 궁합 테스트</h1>
-    <div class="subtitle">쯔꾸르 스타일 스토리 게임</div>
+    <h1>사랑을 측정합니다</h1>
+    <div class="subtitle">당신의 사랑은 몇 %입니까?</div>
     <div class="start-text">화면을 터치하여 시작</div>
   </div>
 </div>
@@ -818,6 +913,8 @@ let waitingForChoice = false;
 let waitingForPuzzle = false;
 let gameStarted = false;
 let currentPortraits = { heroine: '👩', hero: '🧑', system: '🖥️' };
+let relationshipGauge = 50;
+let gameMemory = {};
 
 const NARRATOR = 'narrator';
 const HEROINE = 'heroine';
@@ -941,7 +1038,63 @@ function createConfetti() {
   }
 }
 
-function showChoices(options) {
+function updateGauge(delta) {
+  relationshipGauge = Math.max(0, Math.min(100, relationshipGauge + delta));
+  const fill = document.getElementById('gauge-fill');
+  const label = document.getElementById('gauge-label');
+  if (fill) fill.style.width = relationshipGauge + '%';
+  if (label) {
+    label.textContent = getGaugeLabel();
+    if (relationshipGauge < 30) label.style.color = 'rgba(255,100,100,0.6)';
+    else if (relationshipGauge >= 80) label.style.color = 'rgba(100,255,200,0.6)';
+    else label.style.color = 'rgba(255,255,255,0.4)';
+  }
+}
+
+function getGaugeLabel() {
+  if (relationshipGauge < 30) return '불안정';
+  if (relationshipGauge <= 60) return '보통';
+  if (relationshipGauge <= 80) return '안정적';
+  return '깊은 유대';
+}
+
+function getScoreLabel(score) {
+  if (score >= 80) return '매우 높은 점수!';
+  if (score >= 60) return '평균보다 높음';
+  if (score >= 40) return '평균';
+  return '평균 이하';
+}
+
+function calculateCategoryScores() {
+  const g = relationshipGauge;
+  let physical = Math.round(g * 0.7 + 20);
+  if (gameMemory.gender_thought === 'wonder') physical += 8;
+  else if (gameMemory.gender_thought === 'scared') physical -= 5;
+  if (gameMemory.night_reaction === 'comfort') physical += 5;
+  else if (gameMemory.night_reaction === 'silence') physical -= 3;
+
+  let bond = Math.round(g * 0.8 + 15);
+  if (gameMemory.puppy_thought === 'love_same') bond += 10;
+  else if (gameMemory.puppy_thought === 'unfair') bond -= 8;
+  if (gameMemory.puppy_debate === 'love_same') bond += 5;
+  else if (gameMemory.puppy_debate === 'agree') bond -= 3;
+
+  let extreme = Math.round(g * 0.5 + 10);
+  if (gameMemory.prison_thought === 'love') extreme += 10;
+  else if (gameMemory.prison_thought === 'duty') extreme -= 5;
+  if (gameMemory.prison_argument === 'apologize') extreme += 5;
+  else if (gameMemory.prison_argument === 'explode') extreme -= 8;
+  if (gameMemory.before_confront === 'hope') extreme += 5;
+  else if (gameMemory.before_confront === 'resign') extreme -= 5;
+
+  return [
+    Math.max(0, Math.min(100, physical)),
+    Math.max(0, Math.min(100, bond)),
+    Math.max(0, Math.min(100, extreme)),
+  ];
+}
+
+function showChoices(options, choiceKey) {
   waitingForChoice = true;
   choicesEl.innerHTML = '';
   options.forEach(opt => {
@@ -952,6 +1105,10 @@ function showChoices(options) {
       e.stopPropagation();
       waitingForChoice = false;
       choicesEl.classList.remove('active');
+      if (choiceKey && opt.value !== undefined) {
+        gameMemory[choiceKey] = opt.value;
+      }
+      if (opt.gauge) updateGauge(opt.gauge);
       currentLine++;
       processLine();
     });
@@ -959,6 +1116,103 @@ function showChoices(options) {
   });
   choicesEl.classList.add('active');
   continueInd.style.visibility = 'hidden';
+}
+
+function showThought(line) {
+  waitingForChoice = true;
+  choicesEl.innerHTML = '';
+  const prompt = document.createElement('div');
+  prompt.className = 'thought-prompt';
+  prompt.textContent = line.prompt;
+  choicesEl.appendChild(prompt);
+  line.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'thought-btn';
+    btn.textContent = opt.text;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      waitingForChoice = false;
+      choicesEl.classList.remove('active');
+      if (line.key && opt.value !== undefined) {
+        gameMemory[line.key] = opt.value;
+      }
+      if (opt.gauge) updateGauge(opt.gauge);
+      currentLine++;
+      processLine();
+    });
+    choicesEl.appendChild(btn);
+  });
+  choicesEl.classList.add('active');
+  continueInd.style.visibility = 'hidden';
+}
+
+function showTimedChoice(line) {
+  waitingForChoice = true;
+  const wrap = document.createElement('div');
+  wrap.className = 'timed-choice-wrap';
+
+  const ring = document.createElement('div');
+  ring.className = 'timed-choice-timer-ring';
+  ring.style.setProperty('--angle', '360deg');
+  const inner = document.createElement('div');
+  inner.className = 'timed-choice-timer-inner';
+  inner.textContent = Math.ceil(line.time / 1000);
+  ring.appendChild(inner);
+  wrap.appendChild(ring);
+
+  if (line.prompt) {
+    const p = document.createElement('div');
+    p.className = 'timed-choice-prompt';
+    p.textContent = line.prompt;
+    wrap.appendChild(p);
+  }
+
+  let done = false;
+  let animFrame;
+
+  function selectOption(opt) {
+    if (done) return;
+    done = true;
+    cancelAnimationFrame(animFrame);
+    if (line.key && opt.value !== undefined) {
+      gameMemory[line.key] = opt.value;
+    }
+    if (opt.gauge) updateGauge(opt.gauge);
+    wrap.remove();
+    waitingForChoice = false;
+    currentLine++;
+    processLine();
+  }
+
+  line.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = opt.text;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      selectOption(opt);
+    });
+    wrap.appendChild(btn);
+  });
+
+  game.appendChild(wrap);
+
+  const startTime = Date.now();
+  function tick() {
+    if (done) return;
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, 1 - elapsed / line.time);
+    ring.style.setProperty('--angle', `${remaining * 360}deg`);
+    const secs = Math.ceil(remaining * line.time / 1000);
+    inner.textContent = secs > 0 ? secs : '';
+    if (remaining <= 0) {
+      const idx = line.timeoutIndex !== undefined ? line.timeoutIndex : line.options.length - 1;
+      selectOption(line.options[idx]);
+      return;
+    }
+    animFrame = requestAnimationFrame(tick);
+  }
+  animFrame = requestAnimationFrame(tick);
 }
 
 // ═══════════════════════════════════════
@@ -1765,10 +2019,11 @@ const puzzles = {
     catsWrap.className = 'result-categories';
     catsWrap.style.display = 'none';
 
+    const catScores = calculateCategoryScores();
     const cats = [
-      { emoji: '💜', name: '신체적 적응력', score: 72, color: '#a855f7', desc: '서로 다른 모습에서도 사랑 유지' },
-      { emoji: '🐕', name: '비언어적 유대감', score: 85, color: '#56ab2f', desc: '말 없이 마음 전달' },
-      { emoji: '⚖️', name: '극한 상황 내성', score: 38, color: '#ff6b6b', desc: '극단적 상황에서 관계 유지' },
+      { emoji: '💜', name: '신체적 적응력', score: catScores[0], color: '#a855f7', desc: '서로 다른 모습에서도 사랑 유지' },
+      { emoji: '🐕', name: '비언어적 유대감', score: catScores[1], color: '#56ab2f', desc: '말 없이 마음 전달' },
+      { emoji: '⚖️', name: '극한 상황 내성', score: catScores[2], color: '#ff6b6b', desc: '극단적 상황에서 관계 유지' },
     ];
 
     let revealed = 0;
@@ -1802,7 +2057,7 @@ const puzzles = {
     // Summary
     const summary = document.createElement('div');
     summary.className = 'result-summary';
-    summary.textContent = '종합: 65% — 평균보다 높습니다! 🎉';
+    summary.textContent = `종합: ${relationshipGauge}% — ${getScoreLabel(relationshipGauge)}`;
     wrap.appendChild(summary);
 
     // Exit button
@@ -1816,8 +2071,8 @@ const puzzles = {
 
     // Count up animation
     let current = 0;
-    const target = 65;
-    const step = 2000 / target;
+    const target = relationshipGauge;
+    const step = target > 0 ? 2000 / target : 30;
     function countUp() {
       if (current <= target) {
         scoreBig.textContent = current;
@@ -1826,7 +2081,7 @@ const puzzles = {
       } else {
         createConfetti();
         doFlash();
-        avgText.textContent = '커플 평균 64% — 평균보다 높은 점수입니다!';
+        avgText.textContent = `커플 평균 64% — ${getScoreLabel(target)}`;
         detailBtn.style.display = 'block';
       }
     }
@@ -1893,6 +2148,13 @@ const scenes = [
   // ─── Gender Check Exploration ───
   { explore: 'gender_check' },
 
+  // ─── Thought: After Gender Swap ───
+  { thought: true, key: 'gender_thought', prompt: '"이 상황이..."', options: [
+    { text: '...신기하다. 이런 경험은 처음이야.', value: 'wonder', gauge: 5 },
+    { text: '...혼란스럽다. 나는 누구지?', value: 'confused', gauge: -3 },
+    { text: '...무섭다. 원래대로 돌아갈 수 있을까?', value: 'scared', gauge: -3 },
+  ]},
+
   { type: NARRATOR, text: '서로의 모습을 확인했다.\n겉모습은 거의 똑같은데, 성별의 외형적 특징만 달라져 있었다.' },
   { type: NARRATOR, text: '머리 길이는 그대로. 하지만 턱선, 체형, 모든 것이 미묘하게 달랐다.' },
   { type: NARRATOR, text: '가상현실의 성별대로 외형을 바꿔야 할지, 그대로 유지할지 고민이 됐다.' },
@@ -1917,6 +2179,19 @@ const scenes = [
   { type: NARRATOR, text: '......' },
   { type: HERO, text: '이건 도저히 못하겠어.' },
   { type: HERO, text: '널 사랑해. 하지만 난 원래 남자라고.\n이런 건... 싫어!' },
+
+  // ─── Timed Choice: Test 1 Night ───
+  { timedChoice: true, key: 'night_reaction', time: 5000, timeoutIndex: 2, prompt: '그가 괴로워하고 있다...', options: [
+    { text: '"괜찮아, 이해해."', value: 'comfort', gauge: 5 },
+    { text: '"나도 어려워..."', value: 'empathize', gauge: 2 },
+    { text: '(아무 말도 하지 못한다)', value: 'silence', gauge: -2 },
+  ]},
+  { conditional: true, key: 'night_reaction', speaker: NARRATOR, variants: {
+    'comfort': '따뜻한 말에 그의 표정이 조금 누그러졌다.',
+    'empathize': '서로의 어려움을 나누며 조금은 가까워진 기분이 들었다.',
+    'silence': '어색한 침묵이 흘렀다. 둘 다 어떤 말을 해야 할지 몰랐다.',
+  }},
+
   { type: NARRATOR, text: '그의 목소리에는 진심이 담겨있었다.\n나도 사실... 조금은 이해할 수 있었다.' },
 
   // ═══ Between Test 1 & 2 ═══
@@ -1945,6 +2220,13 @@ const scenes = [
   // ─── Puzzle ② Puppy Communication ───
   { puzzle: 'puppy_comm' },
 
+  // ─── Thought: After Puppy Puzzle ───
+  { thought: true, key: 'puppy_thought', prompt: '"말이 통하지 않아도..."', options: [
+    { text: '사랑은 형태가 달라도 같은 거야.', value: 'love_same', gauge: 5 },
+    { text: '불공평해. 대등하지 않으면 사랑이 아니야.', value: 'unfair', gauge: -3 },
+    { text: '...모르겠어. 아직 답을 내리기엔 이르다.', value: 'unsure', gauge: 0 },
+  ]},
+
   // ═══ Between Test 2 & 3 ═══
   { cg: '' },
   { portraits: { heroine: '👩', hero: '🧑' } },
@@ -1953,11 +2235,16 @@ const scenes = [
   { type: HERO, text: '야, 방금 건 무효야!\n이건 남녀 간의 사랑이 아니라 생명체 간의 사랑이잖아!\n난 이걸 테스트하려는 게 아니라고.' },
   { type: HEROINE, text: '그치만 난 너한테 진짜 사랑을 느꼈는걸?\n많은 것을 희생하더라도 널 지켜주고 싶었고,\n네가 죽을 때까지 곁에 있겠다고 다짐했어.' },
   { type: HERO, text: '나는 강아지였다고.\n나에게 자유는 아무것도 없었어.\n네가 주는 사랑만 받을 뿐이지.\n내가 선택할 수 있는 게 아무것도 없잖아!' },
-  { choice: true, options: [
-    { text: '"...그래도 사랑은 사랑이야. 형태가 달라도."' },
-    { text: '"네 말도 맞아. 대등하지 않은 관계였어."' },
-    { text: '"그건 네 입장이고, 내 입장에선 진심이었어."' },
+  { choice: true, choiceKey: 'puppy_debate', options: [
+    { text: '"...그래도 사랑은 사랑이야. 형태가 달라도."', value: 'love_same', gauge: 4 },
+    { text: '"네 말도 맞아. 대등하지 않은 관계였어."', value: 'agree', gauge: -2 },
+    { text: '"그건 네 입장이고, 내 입장에선 진심이었어."', value: 'my_side', gauge: 0 },
   ]},
+  { conditional: true, key: 'puppy_debate', speaker: NARRATOR, variants: {
+    'love_same': '남자친구는 잠시 말을 멈추었다. 내 진심이 전해진 것 같았다.',
+    'agree': '남자친구는 조금 놀란 표정을 지었다. 내가 자기 편을 들어줄 줄은 몰랐나 보다.',
+    'my_side': '남자친구는 고개를 저었지만, 더 이상 반박하지는 않았다.',
+  }},
   { type: NARRATOR, text: '어쨌든 남자친구는 진짜 사랑을 했다고 우기고,\n나는 찜찜한 마음을 안은 채 다음 테스트로 넘어갔다.' },
   { type: HEROINE, text: '이게 마지막인가 봐.\n제발 이번엔 사람으로 살게 해줘...' },
 
@@ -1982,6 +2269,13 @@ const scenes = [
   { cg: '🚨👮' },
   { type: NARRATOR, text: '갑자기——' },
   { type: NARRATOR, text: '체험 기구가 벗겨지고, 경찰이 들이닥쳤다.' },
+
+  // ─── Timed Choice: Arrest Moment ───
+  { timedChoice: true, key: 'arrest', time: 3000, timeoutIndex: 1, prompt: '경찰이 수갑을 꺼내든다—', options: [
+    { text: '"잠깐요, 이건 오해입니다!"', value: 'protest', gauge: 2 },
+    { text: '(몸이 얼어붙는다)', value: 'freeze', gauge: -2 },
+  ]},
+
   { type: NARRATOR, text: '알고 보니 아동성범죄자를 잡아내기 위해\n이런 장치를 사용한 것이었다.' },
   { type: NARRATOR, text: '우리는 일부러 서로에게 사랑을 느끼려고\n더 노력한 것뿐인데...\n\n너무나 억울했다.' },
 
@@ -1995,6 +2289,13 @@ const scenes = [
 
   // ─── Prison Visit Exploration ───
   { explore: 'prison_visit' },
+
+  // ─── Thought: During Prison ───
+  { thought: true, key: 'prison_thought', prompt: '"나는 왜 이러고 있지..."', options: [
+    { text: '...의무감. 내가 이 상황에 끌어들인 거니까.', value: 'duty', gauge: -5 },
+    { text: '...사랑. 그래도 그를 사랑하니까.', value: 'love', gauge: 5 },
+    { text: '...모르겠어. 관성인 것 같기도 해.', value: 'inertia', gauge: 0 },
+  ]},
 
   { type: NARRATOR, text: '꺼내주려고 아주 많은 노력을 했지만,\n아동성범죄는 형량이 세서 쉽지 않았다.' },
 
@@ -2013,6 +2314,19 @@ const scenes = [
   { type: NARRATOR, text: '나도 그런 그를 보면서 지쳐갔다.' },
   { type: NARRATOR, text: '그러다 그가 도를 넘는 말을 했다.' },
   { type: HERO, text: '이게 다 네 탓이야.\n네가 그때 그 테스트를 하자고 안 했으면—!' },
+
+  // ─── Timed Choice: Prison Argument ───
+  { timedChoice: true, key: 'prison_argument', time: 4000, timeoutIndex: 2, prompt: '그가 소리를 지르고 있다...', options: [
+    { text: '"미안해..."', value: 'apologize', gauge: 3 },
+    { text: '"나도 힘들었어!"', value: 'defend', gauge: -2 },
+    { text: '"...!!!"', value: 'explode', gauge: -4 },
+  ]},
+  { conditional: true, key: 'prison_argument', speaker: NARRATOR, variants: {
+    'apologize': '사과했지만, 그의 분노는 쉽게 가라앉지 않았다.',
+    'defend': '서로의 상처를 드러내며, 말은 점점 거칠어졌다.',
+    'explode': '참았던 감정이 폭발했다. 둘 다 상처뿐인 말을 쏟아냈다.',
+  }},
+
   { type: NARRATOR, text: '그동안 다 들어주다가, 나도 결국 폭발했다.' },
   { type: HEROINE, text: '너랑 나랑 결혼한 사이도 아니고,\n우린 고작 5개월 만난 사이야.' },
   { type: HEROINE, text: '그래도 난 너를 생각해서\n이리저리 뛰어다니며 널 꺼낼 방법을 찾아다녔어.' },
@@ -2032,6 +2346,17 @@ const scenes = [
   // Encounter
   { bg: 'linear-gradient(135deg, #2d3436 0%, #4a1a1a 100%)', desc: '', shake: true },
   { type: NARRATOR, text: '그러다 길에서 우연히 마주쳤다.' },
+
+  // ─── Timed Choice: Post-release Encounter ───
+  { timedChoice: true, key: 'encounter', time: 6000, timeoutIndex: 1, prompt: '그가 다가오고 있다...', options: [
+    { text: '...안녕.', value: 'greet', gauge: 3 },
+    { text: '(피하자)', value: 'avoid', gauge: -3 },
+  ]},
+  { conditional: true, key: 'encounter', speaker: NARRATOR, variants: {
+    'greet': '어색하게 인사를 건넸다. 그의 표정이 복잡해졌다.',
+    'avoid': '시선을 돌리고 지나치려 했지만, 그가 먼저 말을 걸었다.',
+  }},
+
   { type: HERO, text: '우린 싸워서 잠시 시간을 갖는 중이었는데—\n바람을 피다니!' },
   { type: HEROINE, text: '너도 여자 만나잖아!' },
   { type: HERO, text: '그건 이거랑 다르지!' },
@@ -2039,6 +2364,13 @@ const scenes = [
 
   // ─── Empty Lot Exploration ───
   { explore: 'empty_lot' },
+
+  // ─── Thought: Before Confrontation ───
+  { thought: true, key: 'before_confront', prompt: '"그를 만나면..."', options: [
+    { text: '...대화가 통할 거야. 아직 희망이 있어.', value: 'hope', gauge: 5 },
+    { text: '...무서워. 어떤 일이 벌어질지 모르겠어.', value: 'fear', gauge: -3 },
+    { text: '...어떻게 되든 상관없어. 다 끝났으니까.', value: 'resign', gauge: -3 },
+  ]},
 
   // ─── Puzzle ④ Confrontation ───
   { puzzle: 'confrontation' },
@@ -2067,13 +2399,13 @@ const scenes = [
 
   // ═══ EPILOGUE ═══
   { bg: 'linear-gradient(135deg, #606c88 0%, #3f4c6b 50%, #2c3e50 100%)', desc: '', fade: true },
-  { type: NARRATOR, text: '화면에는 65라는 숫자가 떠있고,\n배경에 빵빠레와 축포 그림이 계속해서 터지고 있었다.' },
+  { type: NARRATOR, text: '화면에는 숫자가 떠있고,\n배경에 빵빠레와 축포 그림이 계속해서 터지고 있었다.' },
   { type: NARRATOR, text: '그 발랄한 축하 연출이\n어째서인지 잔인하게 느껴졌다.' },
   { type: NARRATOR, text: '서로를 잠시 바라보았다.' },
   { type: NARRATOR, text: '아무 말도 나오지 않았다.' },
-  { choice: true, options: [
-    { text: '"...나가자."' },
-    { text: '(아무 말 없이 짐을 챙긴다)' },
+  { choice: true, choiceKey: 'epilogue', options: [
+    { text: '"...나가자."', value: 'leave', gauge: 0 },
+    { text: '(아무 말 없이 짐을 챙긴다)', value: 'silent', gauge: -2 },
   ]},
   { type: NARRATOR, text: '내가 먼저 짐을 챙겨서 천막을 나섰다.' },
   { bg: 'linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #4a6741 100%)' },
@@ -2173,8 +2505,22 @@ function processLine() {
     }
   }
 
+  // Thought
+  if (line.thought) { showThought(line); return; }
+
+  // Timed Choice
+  if (line.timedChoice) { showTimedChoice(line); return; }
+
+  // Conditional
+  if (line.conditional) {
+    const memVal = gameMemory[line.key];
+    const variant = line.variants[memVal] || line.variants['default'] || Object.values(line.variants)[0];
+    showDialogue({ type: line.speaker || NARRATOR, text: variant });
+    return;
+  }
+
   // Choice
-  if (line.choice) { showChoices(line.options); return; }
+  if (line.choice) { showChoices(line.options, line.choiceKey); return; }
 
   // Dialogue
   if (line.type) { showDialogue(line); return; }
@@ -2263,6 +2609,12 @@ function startGame() {
   portraitEl.classList.remove('active');
   portraitEl.textContent = '';
   currentPortraits = { heroine: '👩', hero: '🧑', system: '🖥️' };
+  relationshipGauge = 50;
+  gameMemory = {};
+  const gaugeFill = document.getElementById('gauge-fill');
+  const gaugeLabel = document.getElementById('gauge-label');
+  if (gaugeFill) gaugeFill.style.width = '50%';
+  if (gaugeLabel) { gaugeLabel.textContent = '보통'; gaugeLabel.style.color = 'rgba(255,255,255,0.4)'; }
 
   const startHandler = () => {
     titleScreen.removeEventListener('click', startHandler);
