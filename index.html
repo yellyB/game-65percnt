@@ -817,6 +817,40 @@ body {
   transform: scale(1.02);
 }
 
+/* ─── Micro Choice ─── */
+.micro-choice-wrap {
+  position: absolute;
+  bottom: 36%;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  z-index: 25;
+  padding: 0 1.5rem;
+  animation: microFadeIn 0.4s ease;
+}
+@keyframes microFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.micro-choice-btn {
+  padding: 0.5rem 1.2rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.7);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+.micro-choice-btn:hover, .micro-choice-btn:active {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.95);
+}
+
 /* ─── Timed Choice ─── */
 .timed-choice-wrap {
   position: absolute;
@@ -1170,6 +1204,28 @@ function showThought(line) {
     choicesEl.appendChild(btn);
   });
   choicesEl.classList.add('active');
+  continueInd.style.visibility = 'hidden';
+}
+
+function showMicroChoice(line) {
+  waitingForChoice = true;
+  const wrap = document.createElement('div');
+  wrap.className = 'micro-choice-wrap';
+  line.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'micro-choice-btn';
+    btn.textContent = opt.text;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      waitingForChoice = false;
+      wrap.remove();
+      if (opt.gauge) updateGauge(opt.gauge);
+      currentLine++;
+      processLine();
+    });
+    wrap.appendChild(btn);
+  });
+  document.getElementById('game').appendChild(wrap);
   continueInd.style.visibility = 'hidden';
 }
 
@@ -2165,6 +2221,10 @@ const scenes = [
   { type: NARRATOR, text: '정신을 차려보니 내 손을 잡고 있는 사람은—\n내 남자친구가 아니라 어떤 여자였다.' },
   { type: HEROINE, text: '억?!' },
   { type: NARRATOR, text: '소리를 지르며 손을 뗐는데, 그 여자도 똑같이 놀란다.' },
+  { microChoice: true, options: [
+    { text: '자세히 본다', gauge: 1 },
+    { text: '뒷걸음친다', gauge: -1 },
+  ]},
   { type: NARRATOR, text: '이상하게 키가 크고 덩치가 큰 그 여자.\n잘 살펴보니... 남자친구의 얼굴과 매우 닮았다.' },
   { type: HEROINE, text: '아, 우리 지금 가상현실에 있는 거야? 깜짝이야.' },
   { type: HERO, text: '그런 거야? 나도 깜짝 놀랐어. 진짜 같다.' },
@@ -2286,9 +2346,17 @@ const scenes = [
   { cg: '👨‍👧📋' },
   { type: HEROINE, text: '뭐? 이번엔... 부녀지간이야?' },
   { type: NARRATOR, text: '처음엔 말도 안 되는 상황에 둘 다 경악했다.' },
+  { microChoice: true, options: [
+    { text: '받아들이자', gauge: 2 },
+    { text: '이건 아닌데...', gauge: -1 },
+  ]},
   { type: NARRATOR, text: '하지만 테스트를 잘 통과하고 싶어서,\n일부러라도 사랑을 느끼려고 노력했다.' },
   { type: NARRATOR, text: '부녀지간이라는 상황 때문에\n자꾸 본능적 거부감이 들었지만...' },
   { type: NARRATOR, text: '그래도 둘은 노력했다.\n아버지로서, 딸로서의 사랑을 진심으로 느끼려고.' },
+  { microChoice: true, options: [
+    { text: '진심으로 노력한다', gauge: 2 },
+    { text: '연기하는 척한다', gauge: -1 },
+  ]},
   { type: NARRATOR, text: '그리고 어떤 사건을 계기로—\n남자친구가 나에게 이성적 사랑을 느끼는 순간이 왔다.' },
 
   // Arrest
@@ -2340,6 +2408,10 @@ const scenes = [
   { type: NARRATOR, text: '남자친구는 희망이 거의 없다는 걸 깨달았고,\n나를 점점 비난하기 시작했다.' },
   { type: NARRATOR, text: '내가 잘못한 게 아니라는 걸 알면서도,\n자기 상황이 너무 척박하니까 누구라도 탓하게 된 거였다.' },
   { type: NARRATOR, text: '나도 그런 그를 보면서 지쳐갔다.' },
+  { microChoice: true, options: [
+    { text: '그래도 참는다', gauge: 2 },
+    { text: '한계가 온다', gauge: -1 },
+  ]},
   { type: NARRATOR, text: '그러다 그가 도를 넘는 말을 했다.' },
   { type: HERO, text: '이게 다 네 탓이야.\n네가 그때 그 테스트를 하자고 안 했으면—!' },
 
@@ -2366,6 +2438,10 @@ const scenes = [
   { bg: 'linear-gradient(135deg, #2d3436 0%, #636e72 100%)', desc: '' },
   { type: NARRATOR, text: '그런데 기적적으로—\n그 기계가 법적 문제에 휘말리게 되면서\n남자친구가 감옥을 나올 수 있게 됐다.' },
   { type: NARRATOR, text: '관계가 악화되긴 했지만,\n다행이라고 생각했다.' },
+  { microChoice: true, options: [
+    { text: '다시 시작할 수 있을까', gauge: 2 },
+    { text: '이미 끝난 거야', gauge: -2 },
+  ]},
   { type: NARRATOR, text: '하지만 솔직히... 나에게는 관심 있는 사람이 생겼다.\n너무 힘든 일을 겪어서 누군가에게 의지하고 싶었고,\n3년이란 시간은 충분히 오래 노력한 시간이었으니까.' },
   { type: NARRATOR, text: '그리고 감옥을 나온 남자친구는—\n다른 여자를 만날 수 있다는 생각에\n바로 방탕한 생활을 시작했다.' },
   { type: NARRATOR, text: '...기막혔다.' },
@@ -2409,6 +2485,10 @@ const scenes = [
   { type: NARRATOR, text: '몸싸움을 하다가 그를 밀쳤는데—' },
   { type: NARRATOR, text: '공사 장비에 머리를 부딪힌 남자친구.' },
   { type: NARRATOR, text: '피를 흘리며 나에게 손을 뻗었다.' },
+  { microChoice: true, options: [
+    { text: '손을 잡는다', gauge: 2 },
+    { text: '얼어붙는다', gauge: -1 },
+  ]},
   { type: NARRATOR, text: '......' },
   { type: NARRATOR, text: '맥박이 없었다.' },
   { type: NARRATOR, text: '그렇게 그가 눈을 감았다.' },
@@ -2420,6 +2500,10 @@ const scenes = [
   { type: SYSTEM, text: '테스트가 종료되었습니다.' },
   { type: NARRATOR, text: '...눈을 떴다.' },
   { type: NARRATOR, text: '우리는 축제의 천막 안에 있었다.' },
+  { microChoice: true, options: [
+    { text: '그를 본다', gauge: 1 },
+    { text: '고개를 숙인다', gauge: -1 },
+  ]},
   { type: NARRATOR, text: '둘 다 어안이 벙벙하고 실감이 나지 않아,\n당황한 얼굴로 기계를 벗었다.' },
 
   // ─── Puzzle ⑤ Result Dashboard ───
@@ -2532,6 +2616,9 @@ function processLine() {
       }
     }
   }
+
+  // Micro Choice
+  if (line.microChoice) { showMicroChoice(line); return; }
 
   // Thought
   if (line.thought) { showThought(line); return; }
