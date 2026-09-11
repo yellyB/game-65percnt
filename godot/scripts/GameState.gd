@@ -21,12 +21,17 @@ func set_flag(key: String, value := true) -> void:
 func has_flag(key: String) -> bool:
 	return flags.get(key, false)
 
+## 엔딩 임계값 (밸런스 — DESIGN.md 참고)
+const ENDING_B_MIN := 50    # 이상이면 B (여지)
+const ENDING_C_MIN := 60    # C 는 게이지 이 이상 + 숨은 단서 전부
+const HIDDEN_TOTAL := 2      # 숨은 고양이 총 2마리
+
 ## 마지막에 호출 — 게이지/플래그로 엔딩을 고른다.
 ## 숫자(65%)는 미끼이고, 진짜 결말은 여기서 갈린다.
 func compute_ending() -> String:
-	if found_hidden >= 1 and gauge >= 55:
-		return "C"          # 히든: 숨은 단서 + 높은 게이지
-	if gauge >= 50:
+	if found_hidden >= HIDDEN_TOTAL and gauge >= ENDING_C_MIN:
+		return "C"          # 히든(완벽): 숨은 단서 전부 + 높은 게이지 = 관찰+다정
+	if gauge >= ENDING_B_MIN:
 		return "B"          # 씁쓸하지만 여지 있음
 	return "A"              # 냉담 — 원작 배드
 
