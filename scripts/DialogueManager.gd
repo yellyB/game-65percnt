@@ -20,6 +20,12 @@ var _on_done: Callable = Callable()
 var _on_choice: Callable = Callable()
 var _mode: String = ""   # "lines" | "choice"
 
+# 타이핑 효과
+var _typing := false
+var _full_text := ""
+var _reveal := 0.0
+const TYPE_CPS := 45.0    # 초당 글자 수
+
 var _cursor_root: Node2D   # 소프트웨어 커서 (OS 커서가 안 그려지는 macOS 이슈 회피)
 
 func _ready() -> void:
@@ -51,9 +57,17 @@ func _build_soft_cursor() -> void:
 	fill.color = Color(1, 1, 1, 1)
 	_cursor_root.add_child(fill)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _cursor_root:
 		_cursor_root.position = get_viewport().get_mouse_position()
+	if _typing:
+		_reveal += TYPE_CPS * delta
+		var n := int(_reveal)
+		if n >= _full_text.length():
+			_text.text = _full_text
+			_typing = false
+		else:
+			_text.text = _full_text.substr(0, n)
 
 func _build_ui() -> void:
 	# 클릭 캐처 (패널보다 먼저 추가 → 패널/선택지 버튼이 위에 옴)
@@ -137,7 +151,18 @@ func _next_line() -> void:
 	if _queue.is_empty():
 		_finish()
 		return
-	_text.text = str(_queue.pop_front())
+	_full_text = str(_queue.pop_front())
+	_reveal = 0.0
+	_typing = true
+	_text.text = ""
+
+## 타이핑 중이면 즉시 전체 표시, 아니면 다음 줄
+func _advance_or_skip() -> void:
+	if _typing:
+		_typing = false
+		_text.text = _full_text
+	else:
+		_next_line()
 
 ## 선택지. options 예: [{ "text": "...", "lines": ["..."], "gauge": 4 }]
 func say_choices(speaker: String, prompt: String, options: Array, on_choice: Callable, name_color := Color(1.0, 0.6, 0.7)) -> void:
@@ -185,7 +210,7 @@ func _on_catcher_input(event: InputEvent) -> void:
 		return   # 선택지 모드에선 버튼으로만 진행
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		_catcher.accept_event()
-		_next_line()
+		_advance_or_skip()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_active or _mode != "lines":
@@ -195,4 +220,4 @@ func _unhandled_input(event: InputEvent) -> void:
 		advance = true
 	if advance:
 		get_viewport().set_input_as_handled()
-		_next_line()
+		_advance_or_skip()
