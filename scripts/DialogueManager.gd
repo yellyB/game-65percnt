@@ -14,6 +14,10 @@ var _name: Label
 var _text: Label
 var _choices: VBoxContainer
 var _hint: Label
+var _portrait: Control
+var _portrait_rect: ColorRect
+var _portrait_img: TextureRect
+var _portrait_label: Label
 
 var _queue: Array = []
 var _on_done: Callable = Callable()
@@ -137,12 +141,62 @@ func _build_ui() -> void:
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	vbox.add_child(_hint)
 
+	_build_portrait()
+
+func _build_portrait() -> void:
+	# 대사창 위 왼쪽 초상화 영역 (그림 있으면 이미지, 없으면 greybox)
+	_portrait = Control.new()
+	_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_portrait.anchor_top = 1.0; _portrait.anchor_bottom = 1.0
+	_portrait.offset_left = 24; _portrait.offset_right = 224
+	_portrait.offset_top = -470; _portrait.offset_bottom = -250
+	add_child(_portrait)
+	_portrait_rect = ColorRect.new()
+	_portrait_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_portrait_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_portrait.add_child(_portrait_rect)
+	_portrait_img = TextureRect.new()
+	_portrait_img.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_portrait_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_portrait_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_portrait_img.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_portrait.add_child(_portrait_img)
+	_portrait_label = Label.new()
+	_portrait_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_portrait_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_portrait_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_portrait_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_portrait_label.modulate = Color(1, 1, 1, 0.7)
+	_portrait_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_portrait.add_child(_portrait_label)
+	_portrait.visible = false
+
+## expr(표정 stem)에 맞는 초상화. 그림 없으면 greybox + 이름.
+func _set_portrait(expr: String) -> void:
+	if expr == "":
+		_portrait.visible = false
+		return
+	_portrait.visible = true
+	var path := "res://assets/char/%s.png" % expr
+	if ResourceLoader.exists(path):
+		_portrait_img.texture = load(path)
+		_portrait_img.visible = true
+		_portrait_rect.color = Color(0, 0, 0, 0)
+		_portrait_label.visible = false
+	else:
+		_portrait_img.texture = null
+		_portrait_img.visible = false
+		_portrait_rect.color = Color8(58, 52, 78)
+		_portrait_label.text = "🎨\n" + expr
+		_portrait_label.visible = true
+
 ## 대사 출력. lines 는 String 또는 Array[String]. name_color 로 화자별 색.
-func say(speaker: String, lines, on_done: Callable = Callable(), name_color := Color(1.0, 0.6, 0.7)) -> void:
+func say(speaker: String, lines, on_done: Callable = Callable(), name_color := Color(1.0, 0.6, 0.7), portrait := "") -> void:
 	_queue = (lines.duplicate() if typeof(lines) == TYPE_ARRAY else [str(lines)])
 	_on_done = on_done
 	_mode = "lines"
 	is_active = true
+	_set_portrait(portrait)
 	_name.text = speaker
 	_name.modulate = name_color
 	_name.visible = speaker != ""
@@ -173,10 +227,11 @@ func _advance_or_skip() -> void:
 		_next_line()
 
 ## 선택지. options 예: [{ "text": "...", "lines": ["..."], "gauge": 4 }]
-func say_choices(speaker: String, prompt: String, options: Array, on_choice: Callable, name_color := Color(1.0, 0.6, 0.7)) -> void:
+func say_choices(speaker: String, prompt: String, options: Array, on_choice: Callable, name_color := Color(1.0, 0.6, 0.7), portrait := "") -> void:
 	_mode = "choice"
 	_on_choice = on_choice
 	is_active = true
+	_set_portrait(portrait)
 	_name.text = speaker
 	_name.modulate = name_color
 	_name.visible = speaker != ""
@@ -209,6 +264,7 @@ func _finish() -> void:
 	is_active = false
 	_panel.visible = false
 	_catcher.visible = false
+	_portrait.visible = false
 	var cb := _on_done
 	_on_done = Callable()
 	if cb.is_valid():

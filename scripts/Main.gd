@@ -111,7 +111,7 @@ func _do_line(b: Dictionary) -> void:
 	var who := String(b.get("who", "narrator"))
 	var sp: Dictionary = SPEAKERS.get(who, SPEAKERS["narrator"])
 	_set_artcue(b)
-	Dialogue.say(_speaker_name(who), Loc.t(b["key"]), _advance, sp["color"])
+	Dialogue.say(_speaker_name(who), Loc.t(b["key"]), _advance, sp["color"], String(b.get("expr", "")))
 
 func _do_choice(b: Dictionary) -> void:
 	var who := String(b.get("who", "heroine"))
@@ -122,7 +122,7 @@ func _do_choice(b: Dictionary) -> void:
 	for o in options:
 		display.append({"text": Loc.t(o["key"])})
 	Dialogue.say_choices(_speaker_name(who), Loc.t(b.get("prompt", "")), display,
-		func(idx: int): _on_choice_picked(options, idx), sp["color"])
+		func(idx: int): _on_choice_picked(options, idx), sp["color"], String(b.get("expr", "")))
 
 func _on_choice_picked(options: Array, idx: int) -> void:
 	var o: Dictionary = options[idx]
@@ -839,11 +839,9 @@ func _build_hud() -> void:
 	_clue_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_clue_label.visible = false
 
-	# 🎨 그래픽/표정 표기 (좌하단, 대사창 위)
+	# 🎨 그래픽/표정 표기 (좌상단; 초상화 greybox 와 겹치지 않게)
 	_artcue = _mk_label(hud, "", 14, Color(0.6, 1, 0.8, 0.85))
-	_artcue.anchor_top = 1.0; _artcue.anchor_bottom = 1.0
-	_artcue.position = Vector2(18, 0)
-	_artcue.offset_top = -268
+	_artcue.position = Vector2(18, 44)
 
 	_toast = _mk_label(hud, "", 18, Color(1, 1, 0.7))
 	_anchor_top_center(_toast, 90)
