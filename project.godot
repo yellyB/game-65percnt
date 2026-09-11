@@ -22,6 +22,7 @@ config/features=PackedStringArray("4.6", "GL Compatibility")
 
 Loc="*res://scripts/Loc.gd"
 GameState="*res://scripts/GameState.gd"
+Audio="*res://scripts/AudioManager.gd"
 Dialogue="*res://scripts/DialogueManager.gd"
 
 [rendering]

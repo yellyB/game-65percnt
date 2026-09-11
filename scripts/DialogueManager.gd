@@ -24,6 +24,7 @@ var _mode: String = ""   # "lines" | "choice"
 var _typing := false
 var _full_text := ""
 var _reveal := 0.0
+var _last_tick := 0
 const TYPE_CPS := 45.0    # 초당 글자 수
 
 var _cursor_root: Node2D   # 소프트웨어 커서 (OS 커서가 안 그려지는 macOS 이슈 회피)
@@ -68,6 +69,11 @@ func _process(delta: float) -> void:
 			_typing = false
 		else:
 			_text.text = _full_text.substr(0, n)
+			if n > _last_tick + 1:
+				_last_tick = n
+				var ch := _full_text.substr(n - 1, 1)
+				if ch != " " and ch != "\n":
+					Audio.play("tick")
 
 func _build_ui() -> void:
 	# 클릭 캐처 (패널보다 먼저 추가 → 패널/선택지 버튼이 위에 옴)
@@ -153,11 +159,13 @@ func _next_line() -> void:
 		return
 	_full_text = str(_queue.pop_front())
 	_reveal = 0.0
+	_last_tick = 0
 	_typing = true
 	_text.text = ""
 
 ## 타이핑 중이면 즉시 전체 표시, 아니면 다음 줄
 func _advance_or_skip() -> void:
+	Audio.play("confirm")
 	if _typing:
 		_typing = false
 		_text.text = _full_text
@@ -186,6 +194,7 @@ func say_choices(speaker: String, prompt: String, options: Array, on_choice: Cal
 	_catcher.visible = true   # 버튼 밖 클릭 흡수 (선택지 모드에선 넘어가지 않음)
 
 func _on_choice_pressed(index: int) -> void:
+	Audio.play("select")
 	var cb := _on_choice
 	_on_choice = Callable()
 	_choices.visible = false

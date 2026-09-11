@@ -138,6 +138,8 @@ func _on_choice_picked(options: Array, idx: int) -> void:
 func _set_bg(b: Dictionary) -> void:
 	var col: Color = b.get("color", Color8(20, 20, 30))
 	create_tween().tween_property(_bg, "color", col, 0.8)
+	if b.has("bgm"):
+		Audio.play_bgm(String(b["bgm"]))   # 파일 있으면 재생 (없으면 무시)
 	var dk := String(b.get("desc", ""))
 	_show_desc("" if dk == "" else String(Loc.t(dk)))
 	_set_artcue(b)
@@ -375,6 +377,7 @@ func _on_trapcat_done(b: Dictionary, win: bool) -> void:
 		GameState.add_gauge(g)
 	if b.has("flag"):
 		GameState.set_flag(String(b["flag"]), win)
+	Audio.play("win" if win else "lose")
 	_autosave()   # 체크포인트: 미니게임(고양이) 끝
 	var lk := String(b.get("success", "")) if win else String(b.get("fail", ""))
 	if lk != "":
@@ -468,6 +471,7 @@ func _mg_lock() -> void:
 		GameState.add_gauge(g)
 	if b.has("flag"):
 		GameState.set_flag(String(b["flag"]), success)
+	Audio.play("win" if success else "lose")
 	_autosave()   # 체크포인트: 미니게임(타이밍) 끝
 	var lk := String(b.get("success", "")) if success else String(b.get("fail", ""))
 	if lk != "":
