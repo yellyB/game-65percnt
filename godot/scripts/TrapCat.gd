@@ -123,6 +123,10 @@ func _gui_input(event: InputEvent) -> void:
 
 func _ai_turn() -> void:
 	_moves += 1
+	# 탈출 경로가 완전히 막혔으면 (내부에서 아직 움직일 수 있어도) 즉시 승리
+	if _shortest_to_edge(_runner, _blocked_set()) == INF:
+		_win()
+		return
 	var res := _pick_ai_move(_runner, _blocked_set())
 	if not res["ok"]:
 		_win()
