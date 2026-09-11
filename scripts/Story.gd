@@ -20,8 +20,7 @@ static func beats() -> Array:
 			 "game": {"game": "trapcat", "radius": 6, "seeds": 14,
 				"success_gauge": 3, "fail_gauge": 0, "success": "mg_cat_win", "fail": "mg_cat_lose"}},
 			{"name": "booth_claw", "frac": Vector2(0.68, 0.50), "color": Color8(180, 90, 110),
-			 "game": {"game": "timing", "prompt": "mg_claw_prompt",
-				"target": 0.5, "halfwidth": 0.11, "speed": 0.85,
+			 "game": {"game": "claw", "speed": 0.8, "tolerance": 40,
 				"success_gauge": 4, "fail_gauge": -1, "success": "mg_claw_win", "fail": "mg_claw_lose"}}]},
 		{"t": "line", "who": "narrator", "key": "pr_walk2"},
 		# ▼ 다중 방(거리↔골목) + 줌인(포장마차) 쇼케이스

@@ -349,6 +349,7 @@ func _launch_minigame(g: Dictionary, cont: Callable) -> void:
 	_mg_continuation = cont
 	match String(g.get("game", "timing")):
 		"trapcat": _show_trapcat(g)
+		"claw":    _show_claw(g)
 		_:         _show_timing(g)
 
 # ── 검은 고양이 가두기 (헥사 전략) ──
@@ -365,10 +366,27 @@ func _show_trapcat(b: Dictionary) -> void:
 	game.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if b.has("radius"): game.radius = int(b["radius"])
 	if b.has("seeds"): game.seed_count = int(b["seeds"])
-	game.finished.connect(func(win: bool): _on_trapcat_done(b, win))
+	game.finished.connect(func(win: bool): _on_minigame_result(b, win))
 	_mg_layer.add_child(game)
 
-func _on_trapcat_done(b: Dictionary, win: bool) -> void:
+# ── 인형뽑기 (실제 집게) ──
+func _show_claw(b: Dictionary) -> void:
+	_mg_layer = CanvasLayer.new()
+	_mg_layer.layer = 24
+	add_child(_mg_layer)
+	var dim := ColorRect.new()
+	dim.color = Color8(28, 24, 36)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mg_layer.add_child(dim)
+	var game = load("res://scripts/ClawMachine.gd").new()
+	game.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if b.has("speed"): game.speed_frac = float(b["speed"])
+	if b.has("tolerance"): game.tolerance = float(b["tolerance"])
+	game.finished.connect(func(win: bool): _on_minigame_result(b, win))
+	_mg_layer.add_child(game)
+
+func _on_minigame_result(b: Dictionary, win: bool) -> void:
 	if _mg_layer:
 		_mg_layer.queue_free()
 		_mg_layer = null
