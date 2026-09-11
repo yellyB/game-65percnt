@@ -92,17 +92,174 @@ function renderPointAndClick(container, data, onComplete) {
 }
 
 // ═══════════════════════════════════════
+//  RICH EXPLORATION RENDERER (발견형)
+//  - goal: 미스터리/목표 배너
+//  - need: 핵심 단서 몇 개를 찾으면 숨은 출구가 등장
+//  - object.clue: 단서(진행 카운트) / object.bonus: 숨은 보상(선택)
+//  - object.hidden + action: 처음엔 안 보이는 출구, 단서 충족 시 등장
+//  - object.choices: 클릭 시 선택지 → 게이지 결과가 달라짐
+// ═══════════════════════════════════════
+function renderExploreRich(container, data, onComplete) {
+  const scene = document.createElement('div');
+  scene.className = 'pnc-scene';
+  const viewport = document.createElement('div');
+  viewport.className = 'pnc-viewport';
+
+  if (data.goal) {
+    const goal = document.createElement('div');
+    goal.className = 'expl-goal';
+    goal.textContent = data.goal;
+    viewport.appendChild(goal);
+  }
+
+  const need = data.need || data.objects.filter(o => o.clue).length;
+  let clues = 0;
+  let completing = false;
+  let exitRevealed = false;
+  let exitEl = null;
+
+  const dialogueBox = document.createElement('div');
+  dialogueBox.className = 'pnc-dialogue-box';
+  const dialogueText = document.createElement('div');
+  dialogueText.className = 'pnc-dialogue-text';
+  dialogueText.textContent = data.startMsg || '';
+  const choicesWrap = document.createElement('div');
+  choicesWrap.className = 'expl-choices';
+  const progressEl = document.createElement('div');
+  progressEl.className = 'pnc-progress';
+  dialogueBox.appendChild(dialogueText);
+  dialogueBox.appendChild(choicesWrap);
+  dialogueBox.appendChild(progressEl);
+
+  function refreshProgress() {
+    progressEl.textContent = '🔍 단서 ' + Math.min(clues, need) + ' / ' + need;
+    progressEl.classList.toggle('expl-ready', clues >= need);
+  }
+
+  function revealExit() {
+    if (exitRevealed || !exitEl) return;
+    exitRevealed = true;
+    exitEl.style.display = '';
+    exitEl.classList.add('expl-revealed');
+    if (data.revealMsg) dialogueText.textContent = data.revealMsg;
+  }
+
+  function countClue() {
+    clues++;
+    refreshProgress();
+    if (clues >= need) revealExit();
+  }
+
+  data.objects.forEach((obj) => {
+    const el = document.createElement('div');
+    el.className = 'pnc-object';
+    if (obj.bonus) el.classList.add('expl-bonus');
+    if (obj.action) { el.classList.add('pnc-exit', 'unlocked'); exitEl = el; }
+    el.style.left = obj.x + '%';
+    el.style.top = obj.y + '%';
+
+    const emoji = document.createElement('div');
+    emoji.className = 'pnc-object-emoji';
+    if (obj.size) emoji.style.fontSize = obj.size + 'rem';
+    emoji.textContent = obj.emoji;
+
+    const label = document.createElement('div');
+    label.className = 'pnc-object-label';
+    label.textContent = obj.label || '?';
+
+    el.appendChild(emoji);
+    el.appendChild(label);
+
+    let used = false;
+    el.addEventListener('click', () => {
+      if (completing) return;
+
+      // 출구
+      if (obj.action) {
+        if (!exitRevealed) return;
+        completing = true;
+        dialogueText.textContent = obj.msg;
+        choicesWrap.innerHTML = '';
+        setTimeout(() => onComplete(), 1100);
+        return;
+      }
+
+      // 선택지가 있는 단서
+      if (obj.choices && !used) {
+        dialogueText.textContent = obj.prompt || obj.msg || '';
+        choicesWrap.innerHTML = '';
+        obj.choices.forEach((c) => {
+          const btn = document.createElement('button');
+          btn.className = 'expl-choice-btn';
+          btn.textContent = c.text;
+          btn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            if (used) return;
+            used = true;
+            el.classList.add('visited');
+            dialogueText.textContent = c.msg;
+            choicesWrap.innerHTML = '';
+            if (c.gauge) updateGauge(c.gauge);
+            if (obj.clue) countClue();
+          });
+          choicesWrap.appendChild(btn);
+        });
+        return;
+      }
+      if (obj.choices && used) { dialogueText.textContent = obj.doneMsg || '이미 살펴봤다.'; return; }
+
+      // 일반 단서 / 보너스
+      choicesWrap.innerHTML = '';
+      dialogueText.textContent = obj.msg;
+      if (!used) {
+        used = true;
+        el.classList.add('visited');
+        if (obj.gauge) updateGauge(obj.gauge);
+        if (obj.clue) countClue();
+      }
+    });
+
+    if (obj.hidden) el.style.display = 'none';
+    viewport.appendChild(el);
+  });
+
+  scene.appendChild(viewport);
+  scene.appendChild(dialogueBox);
+  container.appendChild(scene);
+  refreshProgress();
+}
+
+// ═══════════════════════════════════════
 //  EXPLORATION MODULES
 // ═══════════════════════════════════════
 const explorations = {
 
+  // ▼ 리메이크: 발견형 탐색 (목표 제시 → 단서 찾기 → 숨은 천막 등장 → 선택/보너스)
   festival_street(container, onComplete) {
-    renderPointAndClick(container, {
-      hint: '축제 거리를 둘러보자...',
+    renderExploreRich(container, {
+      goal: '🎯 이상하게 자꾸 눈이 가는 곳이 있다. 뭘까?',
+      startMsg: '축제의 불빛 속. 뭔가 우리를 끌어당기는 게 있다.\n주변을 꼼꼼히 둘러보자. (모두 살펴보면 그게 나타날지도?)',
+      revealMsg: '그때—\n골목 구석, 낡은 천막 하나가 스르륵 눈에 들어왔다.',
       objects: [
-        { emoji: '🍢', label: '포장마차', x: 20, y: 40, size: 2.8, msg: '떡볶이, 순대, 어묵...\n맛있는 냄새가 코를 자극한다.' },
-        { emoji: '🎯', label: '게임 부스', x: 78, y: 35, size: 2.8, msg: '인형뽑기와 사격 게임이 있다.\n"나중에 해볼까?"' },
-        { emoji: '🎪', label: '수상한 천막', x: 50, y: 65, size: 3.5, msg: '"AI가 봐주는 커플 궁합!"\n...뭔가 끌린다. 들어가볼까?', action: true },
+        { emoji: '🍢', label: '포장마차', x: 20, y: 40, size: 2.8, clue: true,
+          msg: '떡볶이, 순대, 어묵... 맛있는 냄새.\n"저기 뒤쪽 골목이 좀 이상하지 않아?" 남주가 중얼거린다.' },
+        { emoji: '🎯', label: '게임 부스', x: 80, y: 33, size: 2.8, clue: true,
+          prompt: '인형뽑기 기계. 남주가 눈을 반짝인다. "하나 뽑아줄까?"',
+          doneMsg: '이미 부스를 지나쳤다.',
+          choices: [
+            { text: '🧸 "응! 뽑아줘~" (기대한다)', gauge: 4,
+              msg: '몇 번의 실패 끝에 그가 인형을 뽑아 건넸다.\n"자, 선물." ...심장이 살짝 뛴다.' },
+            { text: '👀 "됐어, 돈 아까워." (지나친다)', gauge: -2,
+              msg: '그가 머쓱하게 손을 거둔다.\n"...그래, 뭐. 다음에." 살짝 아쉬운 표정.' },
+          ] },
+        { emoji: '🪑', label: '벤치', x: 32, y: 70, size: 2.4, clue: true,
+          msg: '연인들이 앉아 사진을 찍고 있다.\n문득, 우리는 저렇게 웃어본 게 언제였더라.' },
+        // 숨은 보너스 — 유심히 봐야 발견 (게이지 보상)
+        { emoji: '🐱', label: '?', x: 88, y: 74, size: 1.7, bonus: true,
+          msg: '담벼락 위 고양이와 눈이 마주쳤다.\n남주가 조용히 웃는다. "...너 닮았다." 괜히 기분이 좋다.', gauge: 3 },
+        // 숨겨진 핵심 출구 — 단서 2개 찾으면 등장
+        { emoji: '🎪', label: '수상한 천막', x: 52, y: 60, size: 3.5, action: true, hidden: true,
+          msg: '"AI가 봐주는 커플 궁합!"\n...끌린다. 들어가보자.' },
       ]
     }, onComplete);
   },
