@@ -59,7 +59,7 @@ static func data() -> Dictionary:
 
 	# ═══ 프롤로그 · 축제 ═══
 	"pr_walk1": "축제의 밤. 남자친구와 손을 잡고 거리를 걷던 중이었다.",
-	"pr_walk2": "그때, 한쪽에 허름한 천막 부스가 눈에 들어왔다.\n'AI가 봐주는 커플 궁합! 서로의 사랑의 크기가 궁금하신가요?'",
+	"pr_walk2": "'AI가 봐주는 커플 궁합! 서로의 사랑의 크기가 궁금하신가요?'\n우리는 그 허름한 천막 안으로 들어섰다.",
 	"ex_fest_goal": "🎯 주변을 둘러보자. 골목도, 자세히 볼 것도 있을지 몰라.",
 	"ex_fest_stall_name": "포장마차 (자세히 보기)",
 	"ex_fest_pot_name": "김 나는 냄비",
@@ -82,7 +82,9 @@ static func data() -> Dictionary:
 	"claw_hint_grab": "② 인형에 닿는 순간 Space! (초록 구간)",
 	"claw_win": "목표 인형을 뽑았다! 🎉",
 	"claw_lose": "아깝다... 놓쳤다",
-	"hub_prompt": "🎪 오락 부스가 늘어서 있다. 들어가 볼까?  (나가기로 계속)",
+	"hub_prompt": "🎪 오락 부스들을 다 둘러본 뒤, '사랑 측정 부스'로 들어가자.",
+	"hub_locked": "아직 둘러보지 않은 부스가 있다. 다 봐야 들어갈 수 있다.",
+	"booth_lovetest": "💖\n사랑 측정 부스",
 	"hub_exit": "나가기 →",
 	"booth_cat": "🐱\n검은 고양이 가두기",
 	"booth_claw": "🧸\n인형뽑기",

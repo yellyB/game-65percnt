@@ -14,14 +14,15 @@ static func beats() -> Array:
 		# ═══ 프롤로그 · 축제 ═══
 		{"t": "bg", "color": Color8(232, 168, 124), "desc": "desc_festival", "img": "bg_festival"},
 		{"t": "line", "who": "narrator", "key": "pr_walk1"},
-		# 도착하면 오락 부스들이 있고, 골라서 들어가 게임. '나가기'로 진행.
-		{"t": "hub", "prompt": "hub_prompt", "exit_name": "hub_exit", "booths": [
-			{"name": "booth_cat", "frac": Vector2(0.32, 0.50), "color": Color8(70, 62, 110),
+		# 도착하면 오락 부스들이 있고, 다 둘러봐야 '사랑 측정 부스'(진행)가 열린다.
+		{"t": "hub", "prompt": "hub_prompt", "booths": [
+			{"name": "booth_cat", "frac": Vector2(0.27, 0.42), "color": Color8(70, 62, 110),
 			 "game": {"game": "trapcat", "radius": 6, "seeds": 14,
 				"success_gauge": 3, "fail_gauge": 0, "success": "mg_cat_win", "fail": "mg_cat_lose"}},
-			{"name": "booth_claw", "frac": Vector2(0.68, 0.50), "color": Color8(180, 90, 110),
+			{"name": "booth_claw", "frac": Vector2(0.73, 0.42), "color": Color8(180, 90, 110),
 			 "game": {"game": "claw", "speed": 0.8, "tolerance": 40,
-				"success_gauge": 4, "fail_gauge": -1, "success": "mg_claw_win", "fail": "mg_claw_lose"}}]},
+				"success_gauge": 4, "fail_gauge": -1, "success": "mg_claw_win", "fail": "mg_claw_lose"}},
+			{"name": "booth_lovetest", "frac": Vector2(0.50, 0.72), "color": Color8(200, 80, 120), "exit": true}]},
 		{"t": "line", "who": "narrator", "key": "pr_walk2"},
 		# ▼ 다중 방(거리↔골목) + 줌인(포장마차) 쇼케이스
 		{"t": "explore", "data": {"goal": "ex_fest_goal", "start": "street", "rooms": {

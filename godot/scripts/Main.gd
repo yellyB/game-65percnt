@@ -58,6 +58,10 @@ var _mg_continuation: Callable = Callable()   # 미니게임 끝난 뒤 실행 (
 var _hub_node: Control = null
 var _hub_beat := {}
 var _hub_played := {}
+var _hub_play_total := 0
+var _hub_exit_unlocked := false
+var _hub_exit_rect: ColorRect
+var _hub_exit_label: Label
 
 # 탐색 상태 (다중 방 + 줌인)
 var _ex_rooms := {}          # roomid -> room dict
@@ -516,28 +520,28 @@ func _show_hub(b: Dictionary) -> void:
 	pl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hub_node.add_child(pl)
 
-	var vp := get_viewport_rect().size
 	var booths: Array = b["booths"]
+	_hub_play_total = 0
+	for bb in booths:
+		if not bb.get("exit", false):
+			_hub_play_total += 1
+
+	var vp := get_viewport_rect().size
 	for i in booths.size():
 		_make_booth(booths[i], i, vp)
 
-	var exit_btn := Button.new()
-	exit_btn.text = String(Loc.t(b.get("exit_name", "hub_exit")))
-	exit_btn.anchor_left = 0.5; exit_btn.anchor_right = 0.5
-	exit_btn.anchor_top = 0.85; exit_btn.anchor_bottom = 0.85
-	exit_btn.offset_left = -100; exit_btn.offset_right = 100
-	exit_btn.pressed.connect(_exit_hub)
-	_hub_node.add_child(exit_btn)
+	if _hub_play_total == 0:   # 놀거리 없으면 바로 진행 가능
+		_unlock_hub_exit()
 
 func _make_booth(booth: Dictionary, idx: int, vp: Vector2) -> void:
-	var wsize := Vector2(220, 150)
+	var is_exit := bool(booth.get("exit", false))
+	var wsize: Vector2 = Vector2(240, 150) if is_exit else Vector2(200, 140)
 	var f: Vector2 = booth["frac"]
 	var panel := Control.new()
 	panel.size = wsize
 	panel.position = Vector2(f.x * vp.x, f.y * vp.y) - wsize / 2.0
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	var rect := ColorRect.new()
-	rect.color = booth.get("color", Color8(120, 90, 150))
 	rect.size = wsize
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(rect)
@@ -550,15 +554,40 @@ func _make_booth(booth: Dictionary, idx: int, vp: Vector2) -> void:
 	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(nm)
-	panel.gui_input.connect(func(e: InputEvent):
-		if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT and e.pressed:
-			if _hub_played.has(idx):
-				return
-			_hub_played[idx] = true
-			rect.color = Color(0.3, 0.3, 0.36)
-			nm.modulate = Color(1, 1, 1, 0.5)
-			_launch_minigame(booth["game"], _reopen_hub))
+
+	if is_exit:
+		# 사랑 측정 부스 = 진행. 다른 부스를 다 둘러봐야 열린다 (처음엔 잠금)
+		_hub_exit_rect = rect
+		_hub_exit_label = nm
+		rect.color = Color(0.28, 0.28, 0.34)
+		nm.modulate = Color(1, 1, 1, 0.45)
+		panel.gui_input.connect(func(e: InputEvent):
+			if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT and e.pressed:
+				if _hub_exit_unlocked:
+					_exit_hub()
+				else:
+					Dialogue.say("", Loc.t("hub_locked")))
+	else:
+		rect.color = booth.get("color", Color8(120, 90, 150))
+		panel.gui_input.connect(func(e: InputEvent):
+			if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT and e.pressed:
+				if _hub_played.has(idx):
+					return
+				_hub_played[idx] = true
+				rect.color = Color(0.3, 0.3, 0.36)
+				nm.modulate = Color(1, 1, 1, 0.5)
+				if _hub_played.size() >= _hub_play_total:
+					_unlock_hub_exit()
+				_launch_minigame(booth["game"], _reopen_hub))
 	_hub_node.add_child(panel)
+
+func _unlock_hub_exit() -> void:
+	_hub_exit_unlocked = true
+	if _hub_exit_rect:
+		_hub_exit_rect.color = Color8(200, 80, 120)
+	if _hub_exit_label:
+		_hub_exit_label.modulate = Color(1, 1, 1, 1)
+		_hub_exit_label.text = String(Loc.t("booth_lovetest")) + "\n▶"
 
 func _reopen_hub() -> void:
 	if _hub_node:
