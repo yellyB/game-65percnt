@@ -111,18 +111,12 @@ func interact() -> void:
 func _on_choice(index: int) -> void:
 	var c: Dictionary = choices[index]
 	Dialogue.say(display_name, c.get("lines", []))
-	if c.has("gauge"):
-		GameState.add_gauge(int(c["gauge"]))
 	_mark_examined()
 
 func _mark_examined() -> void:
 	if examined:
 		return
 	examined = true
-	if gauge_delta != 0:
-		GameState.add_gauge(gauge_delta)
-	if is_hidden_bonus:
-		GameState.found_hidden += 1
 	_rect.modulate.a = 1.0
 	_rect.color = Color(0.32, 0.32, 0.4)   # 조사 완료 → 어둡게
 	_label.modulate = Color(1, 1, 1, 0.25)

@@ -25,7 +25,6 @@ var _desc: Label
 var _goal: Label
 var _artcue: Label
 var _toast: Label
-var _gauge_label: Label
 var _clue_label: Label
 var _title_layer: CanvasLayer
 var _score_layer: CanvasLayer
@@ -95,8 +94,6 @@ func _ready() -> void:
 	_build_score_layer()
 	_build_pause()
 	GameState.reset()
-	GameState.gauge_changed.connect(_on_gauge)
-	_gauge_label.visible = false
 	_story = load("res://scripts/Story.gd").beats()
 	_advance()   # 첫 beat = 타이틀
 
@@ -145,8 +142,6 @@ func _do_choice(b: Dictionary) -> void:
 
 func _on_choice_picked(options: Array, idx: int) -> void:
 	var o: Dictionary = options[idx]
-	if o.has("gauge"):
-		GameState.add_gauge(int(o["gauge"]))
 	_autosave()   # 체크포인트: 선택 직후
 	if o.has("reply"):
 		Dialogue.say("", Loc.t(o["reply"]), _advance, SPEAKERS["narrator"]["color"])
@@ -412,9 +407,6 @@ func _on_minigame_result(b: Dictionary, win: bool) -> void:
 	if _mg_layer:
 		_mg_layer.queue_free()
 		_mg_layer = null
-	var g := int(b.get("success_gauge", 0)) if win else int(b.get("fail_gauge", 0))
-	if g != 0:
-		GameState.add_gauge(g)
 	if b.has("flag"):
 		GameState.set_flag(String(b["flag"]), win)
 	Audio.play("win" if win else "lose")
@@ -712,9 +704,6 @@ func _mg_lock() -> void:
 	if _mg_layer:
 		_mg_layer.queue_free()
 		_mg_layer = null
-	var g := int(b.get("success_gauge", 0)) if success else int(b.get("fail_gauge", 0))
-	if g != 0:
-		GameState.add_gauge(g)
 	if b.has("flag"):
 		GameState.set_flag(String(b["flag"]), success)
 	Audio.play("win" if success else "lose")
@@ -830,7 +819,6 @@ func _show_title() -> void:
 func _start_from(index: int) -> void:
 	_title_layer.visible = false
 	_started = true
-	_gauge_label.visible = true
 	_i = index
 	_advance()
 
@@ -1078,7 +1066,6 @@ func _the_end(_e: String) -> void:
 	_artcue.text = ""
 	_desc.text = String(Loc.t("ui_the_end"))
 	_desc.modulate.a = 1.0
-	_gauge_label.visible = false
 
 # ══════════ 빌드 ══════════
 func _build_scene() -> void:
@@ -1122,9 +1109,6 @@ func _build_hud() -> void:
 	_goal = _mk_label(hud, "", 16, Color(1, 0.9, 0.7))
 	_anchor_top_center(_goal, 54)
 	_goal.visible = false
-
-	_gauge_label = _mk_label(hud, "", 18, Color(1, 0.7, 0.8))
-	_gauge_label.position = Vector2(18, 14)
 
 	_clue_label = _mk_label(hud, "", 16, Color(1, 1, 1, 0.8))
 	_clue_label.anchor_left = 1.0; _clue_label.anchor_right = 1.0
@@ -1210,7 +1194,3 @@ func _mk_label(parent: Node, text: String, size: int, col: Color) -> Label:
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
 	return l
-
-func _on_gauge(value: int) -> void:
-	var mood_key := "mood_cold" if value < 40 else ("mood_normal" if value < 60 else "mood_warm")
-	_gauge_label.text = "♥ %s %d  (%s)" % [Loc.t("ui_relation"), value, Loc.t(mood_key)]
