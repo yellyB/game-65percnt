@@ -124,19 +124,26 @@ static func beats() -> Array:
 			 "frac": Vector2(0.78, 0.42), "wsize": Vector2(110, 90), "color": Color8(80, 80, 120), "clue": true, "gauge": 1},
 			{"name": "ex_date_home_name", "lines": "ex_date_home_lines", "img": "obj_date_home",
 			 "frac": Vector2(0.50, 0.76), "wsize": Vector2(120, 60), "color": Color8(60, 60, 90), "exit": true}]}},
+		{"t": "line", "who": "narrator", "key": "t1_date_fun"},
+		{"t": "line", "who": "hero", "key": "t1_hero_publiceye", "expr": "hero_female_calm"},
+		{"t": "line", "who": "narrator", "key": "t1_mono_crackle"},
 		{"t": "line", "who": "narrator", "key": "t1_night"},
 		{"t": "line", "who": "narrator", "key": "t1_confused"},
 		{"t": "line", "who": "heroine", "key": "t1_why"},
 		{"t": "line", "who": "hero", "key": "t1_cant", "expr": "hero_female_pain"},
+		{"t": "line", "who": "hero", "key": "t1_hero_original", "expr": "hero_female_pain"},
 		{"t": "choice", "who": "heroine", "prompt": "t1_night_prompt", "options": [
 			{"key": "t1_n1", "gauge": 4, "reply": "t1_n1r"},
 			{"key": "t1_n2", "gauge": -3, "reply": "t1_n2r"},
 			{"key": "t1_n3", "gauge": -5, "reply": "t1_n3r"}]},
+		{"t": "line", "who": "narrator", "key": "t1_mono_understand"},
 
 		# ═══ 테스트 1 종료 ═══
 		{"t": "bg", "color": Color8(26, 26, 46), "desc": ""},
 		{"t": "fade"},
 		{"t": "line", "who": "system", "key": "mid_sys_end"},
+		{"t": "line", "who": "hero", "key": "t1_debrief_hero", "expr": "hero_normal_calm"},
+		{"t": "line", "who": "narrator", "key": "t1_debrief_mono"},
 		{"t": "line", "who": "hero", "key": "mid_hero_real", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "heroine", "key": "mid_heroine_ok"},
 
