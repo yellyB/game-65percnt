@@ -172,6 +172,9 @@ static func beats() -> Array:
 			 "frac": Vector2(0.88, 0.18), "wsize": Vector2(70, 70), "color": Color8(230, 216, 128), "hidden": true, "gauge": 2},
 			{"name": "ex_puppy_exit_name", "lines": "ex_puppy_exit_lines", "img": "obj_puppy_exit",
 			 "frac": Vector2(0.50, 0.82), "wsize": Vector2(150, 60), "color": Color8(128, 128, 140), "exit": true}]}},
+		{"t": "line", "who": "narrator", "key": "t2_narr_days"},
+		{"t": "line", "who": "hero", "key": "t2_hero_needme", "expr": "hero_normal_calm"},
+		{"t": "line", "who": "narrator", "key": "t2_mono_safe"},
 		{"t": "line", "who": "narrator", "key": "t2_bond"},
 		{"t": "line", "who": "system", "key": "t2_sys_end"},
 		{"t": "line", "who": "hero", "key": "t2_invalid", "expr": "hero_normal_pain"},
@@ -179,6 +182,8 @@ static func beats() -> Array:
 		{"t": "choice", "who": "heroine", "prompt": "t2_choice_prompt", "options": [
 			{"key": "t2_c1", "gauge": 3, "reply": "t2_c1r"},
 			{"key": "t2_c2", "gauge": -2, "reply": "t2_c2r"}]},
+		{"t": "line", "who": "hero", "key": "t2_debrief_hero", "expr": "hero_normal_smile"},
+		{"t": "line", "who": "narrator", "key": "t2_debrief_mono"},
 		{"t": "line", "who": "heroine", "key": "t2_human"},
 
 		# ═══ 테스트 3 · 부녀 ═══
