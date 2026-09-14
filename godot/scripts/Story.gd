@@ -14,16 +14,18 @@ static func beats() -> Array:
 		# ═══ 프롤로그 · 축제 ═══
 		{"t": "bg", "color": Color8(232, 168, 124), "desc": "desc_festival", "img": "bg_festival"},
 		{"t": "line", "who": "narrator", "key": "pr_walk1"},
-		# 도착하면 오락 부스들이 있고, 다 둘러봐야 '사랑 측정 부스'(진행)가 열린다.
-		{"t": "hub", "prompt": "hub_prompt", "booths": [
-			{"name": "booth_cat", "frac": Vector2(0.27, 0.42), "color": Color8(70, 62, 110),
-			 "game": {"game": "trapcat", "radius": 6, "seeds": 14,
-				"success_gauge": 3, "fail_gauge": 0, "success": "mg_cat_win", "fail": "mg_cat_lose"}},
-			{"name": "booth_claw", "frac": Vector2(0.73, 0.42), "color": Color8(180, 90, 110),
-			 "game": {"game": "claw", "speed": 0.8, "tolerance": 40,
-				"success_gauge": 4, "fail_gauge": -1, "success": "mg_claw_win", "fail": "mg_claw_lose"}},
-			{"name": "booth_lovetest", "frac": Vector2(0.50, 0.72), "color": Color8(200, 80, 120), "exit": true}]},
-		{"t": "line", "who": "narrator", "key": "pr_walk2"},
+		# 케미 + 외모 씨앗 (조건부 사랑 복선)
+		{"t": "line", "who": "hero", "key": "pr_hero_cotton", "expr": "hero_normal_smile"},
+		{"t": "line", "who": "heroine", "key": "pr_heroine_cotton"},
+		{"t": "line", "who": "hero", "key": "pr_hero_stay", "expr": "hero_normal_smile"},
+		{"t": "line", "who": "narrator", "key": "pr_mono_looks"},
+		# 집착 장면 (여주는 로맨틱하게 느끼고, 플레이어는 위험신호로 읽게)
+		{"t": "line", "who": "narrator", "key": "pr_narr_wave"},
+		{"t": "line", "who": "hero", "key": "pr_hero_who", "expr": "hero_normal_calm"},
+		{"t": "line", "who": "heroine", "key": "pr_heroine_who"},
+		{"t": "line", "who": "hero", "key": "pr_hero_mine", "expr": "hero_normal_calm"},
+		{"t": "line", "who": "narrator", "key": "pr_mono_romantic"},
+		# 축제 둘러보기 (거리↔골목 + 줌인 + 숨은 고양이) → 부스 골목으로
 		# ▼ 다중 방(거리↔골목) + 줌인(포장마차) 쇼케이스
 		{"t": "explore", "data": {"goal": "ex_fest_goal", "start": "street", "rooms": {
 			"street": {"objects": [
@@ -35,13 +37,11 @@ static func beats() -> Array:
 					 "frac": Vector2(0.40, 0.48), "wsize": Vector2(150, 130), "color": Color8(180, 160, 120), "clue": true},
 					{"name": "ex_fest_menu_name", "lines": "ex_fest_menu_lines", "img": "obj_festival_menu",
 					 "frac": Vector2(0.72, 0.40), "wsize": Vector2(110, 150), "color": Color8(220, 220, 200)}]}},
-				{"name": "ex_fest_booth_name", "lines": "ex_fest_booth_lines", "img": "obj_festival_booth",
-				 "frac": Vector2(0.78, 0.34), "wsize": Vector2(120, 90), "color": Color8(200, 90, 100), "clue": true},
 				{"name": "ex_fest_bench_name", "lines": "ex_fest_bench_lines", "img": "obj_festival_bench",
 				 "frac": Vector2(0.30, 0.70), "wsize": Vector2(110, 70), "color": Color8(150, 120, 90), "clue": true},
 				{"name": "ex_fest_door_alley", "goto": "alley",
 				 "frac": Vector2(0.92, 0.62), "wsize": Vector2(80, 130), "color": Color8(45, 45, 65)},
-				{"name": "ex_fest_tent_name", "lines": "ex_fest_tent_lines", "img": "obj_festival_tent",
+				{"name": "ex_fest_booths_name", "lines": "ex_fest_booths_lines", "img": "obj_festival_tent",
 				 "frac": Vector2(0.52, 0.56), "wsize": Vector2(150, 110), "color": Color8(90, 70, 120), "exit": true}]},
 			"alley": {"objects": [
 				{"name": "ex_fest_poster_name", "lines": "ex_fest_poster_lines", "img": "obj_festival_poster",
@@ -51,8 +51,18 @@ static func beats() -> Array:
 				{"name": "ex_fest_door_street", "goto": "street",
 				 "frac": Vector2(0.10, 0.62), "wsize": Vector2(80, 130), "color": Color8(70, 65, 50)}]},
 		}}},
+		# 오락 부스 허브 → 사랑 측정 부스(진행). 다른 부스 다 봐야 열림.
+		{"t": "hub", "prompt": "hub_prompt", "booths": [
+			{"name": "booth_cat", "frac": Vector2(0.27, 0.42), "color": Color8(70, 62, 110),
+			 "game": {"game": "trapcat", "radius": 6, "seeds": 14,
+				"success_gauge": 3, "fail_gauge": 0, "success": "mg_cat_win", "fail": "mg_cat_lose"}},
+			{"name": "booth_claw", "frac": Vector2(0.73, 0.42), "color": Color8(180, 90, 110),
+			 "game": {"game": "claw", "speed": 0.8, "tolerance": 40,
+				"success_gauge": 4, "fail_gauge": -1, "success": "mg_claw_win", "fail": "mg_claw_lose"}},
+			{"name": "booth_lovetest", "frac": Vector2(0.50, 0.72), "color": Color8(200, 80, 120), "exit": true}]},
 		{"t": "line", "who": "hero", "key": "pr_hero_wanna", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "heroine", "key": "pr_heroine_ok"},
+		{"t": "line", "who": "narrator", "key": "pr_walk2"},
 
 		{"t": "bg", "color": Color8(45, 36, 56), "desc": "desc_tent", "img": "bg_tent"},
 		{"t": "fade"},
@@ -70,6 +80,7 @@ static func beats() -> Array:
 		{"t": "line", "who": "system", "key": "pr_sys_desc1"},
 		{"t": "line", "who": "system", "key": "pr_sys_desc2"},
 		{"t": "line", "who": "system", "key": "pr_sys_desc3"},
+		{"t": "line", "who": "narrator", "key": "pr_mono_sure"},
 		{"t": "line", "who": "hero", "key": "pr_hero_justgame", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "narrator", "key": "pr_narr_dark"},
 
