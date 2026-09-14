@@ -371,6 +371,7 @@ func _launch_minigame(g: Dictionary, cont: Callable) -> void:
 		"claw":    _show_claw(g)
 		"mash":    _show_mash(g)
 		"keypad":  _show_keypad(g)
+		"pattern": _show_pattern(g)
 		_:         _show_timing(g)
 
 # ── 검은 고양이 가두기 (헥사 전략) ──
@@ -423,6 +424,20 @@ func _on_minigame_result(b: Dictionary, win: bool) -> void:
 		Dialogue.say("", Loc.t(lk), _mg_continuation, SPEAKERS["narrator"]["color"])
 	else:
 		_mg_continuation.call()
+
+# ── 패턴 잠금 (방탈출) ──
+func _show_pattern(b: Dictionary) -> void:
+	_mg_layer = CanvasLayer.new(); _mg_layer.layer = 24; add_child(_mg_layer)
+	var dim := ColorRect.new(); dim.color = Color(0, 0, 0, 0.72)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mg_layer.add_child(dim)
+	var game = load("res://scripts/PatternLock.gd").new()
+	game.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	game.answer = b.get("answer_pattern", [])
+	game.show_hint = bool(b.get("show_hint", true))
+	game.hint_text = String(Loc.t(b.get("hint", ""))) if b.has("hint") else ""
+	game.finished.connect(func(win: bool): _on_minigame_result(b, win))
+	_mg_layer.add_child(game)
 
 # ── 비밀번호 키패드 (방탈출) ──
 func _show_keypad(b: Dictionary) -> void:

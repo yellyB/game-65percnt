@@ -127,6 +127,10 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "t1_date_fun"},
 		{"t": "line", "who": "hero", "key": "t1_hero_publiceye", "expr": "hero_female_calm"},
 		{"t": "line", "who": "narrator", "key": "t1_mono_crackle"},
+		# 방탈출: 남주가 바꾼 휴대폰 패턴 → 감시 정황
+		{"t": "line", "who": "narrator", "key": "t1_phone_intro"},
+		{"t": "minigame", "game": "pattern", "answer_pattern": [0, 3, 6, 7, 8], "show_hint": true,
+		 "hint": "pattern_hint", "success": "t1_phone_reveal", "fail": "t1_phone_giveup", "flag": "control_seen"},
 		{"t": "line", "who": "narrator", "key": "t1_night"},
 		{"t": "line", "who": "narrator", "key": "t1_confused"},
 		{"t": "line", "who": "heroine", "key": "t1_why"},
