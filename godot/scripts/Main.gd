@@ -54,6 +54,14 @@ var _mg_track_right := 0.0
 var _mg_beat := {}
 var _mg_continuation: Callable = Callable()   # 미니게임 끝난 뒤 실행 (스토리 진행 or 허브 복귀)
 
+# 연타(mash) 미니게임
+var _mash_active := false
+var _mash_val := 0.0
+var _mash_time := 0.0
+var _mash_beat := {}
+var _mash_bar: ColorRect
+var _mash_timer: Label
+
 # 부스 허브 (도착 시 부스 선택)
 var _hub_node: Control = null
 var _hub_beat := {}
@@ -354,6 +362,7 @@ func _launch_minigame(g: Dictionary, cont: Callable) -> void:
 	match String(g.get("game", "timing")):
 		"trapcat": _show_trapcat(g)
 		"claw":    _show_claw(g)
+		"mash":    _show_mash(g)
 		_:         _show_timing(g)
 
 # ── 검은 고양이 가두기 (헥사 전략) ──
@@ -406,6 +415,107 @@ func _on_minigame_result(b: Dictionary, win: bool) -> void:
 		Dialogue.say("", Loc.t(lk), _mg_continuation, SPEAKERS["narrator"]["color"])
 	else:
 		_mg_continuation.call()
+
+# ── 연타(mash): 게이지 채우기, 실패 시 배드엔딩 가능 ──
+func _show_mash(b: Dictionary) -> void:
+	_mash_beat = b
+	_mash_val = 0.0
+	_mash_time = float(b.get("time", 4.0))
+	_mg_layer = CanvasLayer.new()
+	_mg_layer.layer = 24
+	add_child(_mg_layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mg_layer.add_child(dim)
+	var vp := get_viewport_rect().size
+	var cx := vp.x / 2.0
+	var cy := vp.y / 2.0
+	var pr := _mk_label(_mg_layer, String(Loc.t(b.get("prompt", ""))), 22, Color(1, 0.9, 0.7))
+	pr.anchor_left = 0.5; pr.anchor_right = 0.5
+	pr.offset_left = -340; pr.offset_right = 340; pr.offset_top = cy - 90
+	pr.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var track := ColorRect.new()
+	track.color = Color(0.15, 0.15, 0.2)
+	track.size = Vector2(420, 34); track.position = Vector2(cx - 210, cy)
+	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mg_layer.add_child(track)
+	_mash_bar = ColorRect.new()
+	_mash_bar.color = Color(0.9, 0.3, 0.35)
+	_mash_bar.size = Vector2(0, 34); _mash_bar.position = Vector2(cx - 210, cy)
+	_mash_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mg_layer.add_child(_mash_bar)
+	_mash_timer = _mk_label(_mg_layer, "", 18, Color(1, 1, 1, 0.8))
+	_mash_timer.anchor_left = 0.5; _mash_timer.anchor_right = 0.5
+	_mash_timer.offset_left = -100; _mash_timer.offset_right = 100; _mash_timer.offset_top = cy + 44
+	_mash_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_mash_active = true
+
+func _process_mash(delta: float) -> void:
+	_mash_time -= delta
+	_mash_val = maxf(0.0, _mash_val - 16.0 * delta)   # 가만히 있으면 감소 → 연타 필요
+	if _mash_bar:
+		_mash_bar.size.x = 420.0 * (_mash_val / 100.0)
+	if _mash_timer:
+		_mash_timer.text = "%.1f" % maxf(0.0, _mash_time)
+	if _mash_val >= 100.0:
+		_mash_active = false
+		_mash_finish(true)
+	elif _mash_time <= 0.0:
+		_mash_active = false
+		_mash_finish(false)
+
+func _mash_finish(success: bool) -> void:
+	if _mg_layer:
+		_mg_layer.queue_free()
+		_mg_layer = null
+	Audio.play("win" if success else "lose")
+	var b := _mash_beat
+	_autosave()
+	if success:
+		var lk := String(b.get("success", ""))
+		if lk != "":
+			Dialogue.say("", Loc.t(lk), _mg_continuation, SPEAKERS["narrator"]["color"])
+		else:
+			_mg_continuation.call()
+	else:
+		if bool(b.get("fail_bad", false)):
+			_bad_ending(String(b.get("fail", "")))
+		else:
+			var lk := String(b.get("fail", ""))
+			if lk != "":
+				Dialogue.say("", Loc.t(lk), _mg_continuation, SPEAKERS["narrator"]["color"])
+			else:
+				_mg_continuation.call()
+
+# 배드엔딩 (주인공 사망 등) — 스토리 중단, 재시작 제공
+func _bad_ending(fail_key: String) -> void:
+	GameState.clear_save()
+	if fail_key != "":
+		Dialogue.say("", Loc.t(fail_key), _show_bad_end, SPEAKERS["narrator"]["color"])
+	else:
+		_show_bad_end()
+
+func _show_bad_end() -> void:
+	var lay := CanvasLayer.new()
+	lay.layer = 26
+	add_child(lay)
+	var bg := ColorRect.new()
+	bg.color = Color(0.02, 0.0, 0.0)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	lay.add_child(bg)
+	var t := _mk_label(lay, String(Loc.t("end_bad_title")), 40, Color8(200, 60, 60))
+	_center_label(t, -60)
+	var s := _mk_label(lay, String(Loc.t("end_bad_sub")), 18, Color(1, 1, 1, 0.7))
+	_center_label(s, 4)
+	var btn := Button.new()
+	btn.text = String(Loc.t("btn_restart"))
+	btn.anchor_left = 0.5; btn.anchor_right = 0.5; btn.anchor_top = 0.5; btn.anchor_bottom = 0.5
+	btn.offset_left = -90; btn.offset_right = 90; btn.offset_top = 70
+	btn.pressed.connect(func(): get_tree().reload_current_scene())
+	lay.add_child(btn)
 
 # ── 타이밍 / QTE ──
 func _show_timing(b: Dictionary) -> void:
@@ -468,7 +578,12 @@ func _show_timing(b: Dictionary) -> void:
 	_mg_active = true
 
 func _process(delta: float) -> void:
-	if _paused or not _mg_active:
+	if _paused:
+		return
+	if _mash_active:
+		_process_mash(delta)
+		return
+	if not _mg_active:
 		return
 	_mg_pos += _mg_dir * _mg_speed * delta
 	if _mg_pos >= 1.0:
@@ -643,6 +758,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_pause()
 		return
 	if _paused:
+		return
+	if _mash_active:
+		var hit := false
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			hit = true
+		elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
+			hit = true
+		if hit:
+			get_viewport().set_input_as_handled()
+			_mash_val = minf(100.0, _mash_val + 10.0)
 		return
 	if _mg_active:
 		var lock := false
