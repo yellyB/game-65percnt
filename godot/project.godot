@@ -20,6 +20,7 @@ config/features=PackedStringArray("4.6", "GL Compatibility")
 
 [autoload]
 
+Fonts="*res://scripts/Fonts.gd"
 Loc="*res://scripts/Loc.gd"
 GameState="*res://scripts/GameState.gd"
 Audio="*res://scripts/AudioManager.gd"

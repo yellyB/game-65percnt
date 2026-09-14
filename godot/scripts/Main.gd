@@ -984,7 +984,10 @@ func _build_pause() -> void:
 	var ll := Label.new(); ll.text = String(Loc.t("set_lang")); ll.custom_minimum_size = Vector2(130, 0)
 	langrow.add_child(ll)
 	var opt := OptionButton.new()
-	opt.add_item("한국어"); opt.add_item("English"); opt.add_item("日本語")
+	for code in Loc.AVAILABLE:
+		opt.add_item(String(Loc.DISPLAY.get(code, code)))
+	opt.selected = Loc.AVAILABLE.find(Loc.lang)
+	opt.item_selected.connect(func(idx: int): Loc.set_lang(Loc.AVAILABLE[idx]))
 	opt.custom_minimum_size = Vector2(200, 0)
 	langrow.add_child(opt)
 	# 볼륨 (장식)
