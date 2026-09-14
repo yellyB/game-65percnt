@@ -1070,9 +1070,9 @@ func _spawn_confetti() -> void:
 
 # ══════════ 엔딩 ══════════
 func _do_ending() -> void:
-	var e: String = GameState.compute_ending()
 	GameState.clear_save()   # 완주 → 세이브 정리
-	Dialogue.say("", Loc.t("end_" + e), func(): _the_end(e), SPEAKERS["narrator"]["color"])
+	# 진엔딩은 하나. (게이지로 A/B/C 분기 없음. 배드엔딩은 중간 실패 시에만.)
+	Dialogue.say("", Loc.t("end_true"), func(): _the_end("true"), SPEAKERS["narrator"]["color"])
 
 func _the_end(_e: String) -> void:
 	_artcue.text = ""
