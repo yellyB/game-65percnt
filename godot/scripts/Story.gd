@@ -268,6 +268,8 @@ static func beats() -> Array:
 		{"t": "bg", "color": Color8(255, 236, 210), "desc": "", "img": "bg_result"},
 		{"t": "fade"},
 		{"t": "line", "who": "narrator", "key": "res_wake"},
+		{"t": "line", "who": "hero", "key": "res_hero_wow", "expr": "hero_normal_smile"},
+		{"t": "line", "who": "narrator", "key": "res_mono_wake2"},
 		{"t": "score"},
 
 		# ═══ 에필로그 (게이지로 분기) ═══
