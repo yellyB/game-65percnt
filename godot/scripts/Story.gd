@@ -218,6 +218,10 @@ static func beats() -> Array:
 			 "frac": Vector2(0.80, 0.42), "wsize": Vector2(100, 80), "color": Color8(120, 120, 110), "clue": true},
 			{"name": "ex_prison_exit_name", "lines": "ex_prison_exit_lines", "img": "obj_prison_exit",
 			 "frac": Vector2(0.50, 0.80), "wsize": Vector2(120, 60), "color": Color8(90, 90, 100), "exit": true}]}},
+		# 방탈출 퍼즐: 벽 낙서 → 전화기 비밀번호 → 진실
+		{"t": "line", "who": "narrator", "key": "kp_prison_intro"},
+		{"t": "minigame", "game": "keypad", "answer": "4231", "hint": "kp_prison_hint",
+		 "success": "kp_prison_reveal", "fail": "kp_prison_giveup", "flag": "truth"},
 		{"t": "line", "who": "narrator", "key": "t3_try"},
 		{"t": "line", "who": "narrator", "key": "t3_tired"},
 		{"t": "line", "who": "hero", "key": "t3_hero_jail_obsess", "expr": "hero_normal_pain"},

@@ -62,6 +62,13 @@ var _mash_beat := {}
 var _mash_bar: ColorRect
 var _mash_timer: Label
 
+# 비밀번호 키패드 (방탈출)
+var _kp_active := false
+var _kp_answer := ""
+var _kp_input := ""
+var _kp_display: Label
+var _kp_beat := {}
+
 # 부스 허브 (도착 시 부스 선택)
 var _hub_node: Control = null
 var _hub_beat := {}
@@ -363,6 +370,7 @@ func _launch_minigame(g: Dictionary, cont: Callable) -> void:
 		"trapcat": _show_trapcat(g)
 		"claw":    _show_claw(g)
 		"mash":    _show_mash(g)
+		"keypad":  _show_keypad(g)
 		_:         _show_timing(g)
 
 # ── 검은 고양이 가두기 (헥사 전략) ──
@@ -411,6 +419,92 @@ func _on_minigame_result(b: Dictionary, win: bool) -> void:
 	Audio.play("win" if win else "lose")
 	_autosave()   # 체크포인트: 미니게임(고양이) 끝
 	var lk := String(b.get("success", "")) if win else String(b.get("fail", ""))
+	if lk != "":
+		Dialogue.say("", Loc.t(lk), _mg_continuation, SPEAKERS["narrator"]["color"])
+	else:
+		_mg_continuation.call()
+
+# ── 비밀번호 키패드 (방탈출) ──
+func _show_keypad(b: Dictionary) -> void:
+	_kp_beat = b
+	_kp_answer = String(b.get("answer", ""))
+	_kp_input = ""
+	_mg_layer = CanvasLayer.new(); _mg_layer.layer = 24; add_child(_mg_layer)
+	var dim := ColorRect.new(); dim.color = Color(0, 0, 0, 0.72)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_mg_layer.add_child(dim)
+	var vp := get_viewport_rect().size
+	var cy := vp.y / 2.0
+	var hint := _mk_label(_mg_layer, String(Loc.t(b.get("hint", ""))), 18, Color(1, 1, 0.85))
+	hint.anchor_left = 0.5; hint.anchor_right = 0.5
+	hint.offset_left = -340; hint.offset_right = 340; hint.offset_top = cy - 210
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_kp_display = _mk_label(_mg_layer, "", 40, Color(0.6, 1, 0.8))
+	_kp_display.anchor_left = 0.5; _kp_display.anchor_right = 0.5
+	_kp_display.offset_left = -200; _kp_display.offset_right = 200; _kp_display.offset_top = cy - 100
+	_kp_display.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var grid := GridContainer.new(); grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	grid.anchor_left = 0.5; grid.anchor_right = 0.5; grid.anchor_top = 0.5; grid.anchor_bottom = 0.5
+	grid.offset_left = -145; grid.offset_top = -30; grid.offset_right = 145; grid.offset_bottom = 240
+	_mg_layer.add_child(grid)
+	for lbl in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+		_kp_btn(grid, lbl, lbl)
+	_kp_btn(grid, String(Loc.t("kp_clear")), "clear")
+	_kp_btn(grid, "0", "0")
+	_kp_btn(grid, String(Loc.t("kp_enter")), "enter")
+	var giveup := Button.new(); giveup.text = String(Loc.t("kp_giveup"))
+	giveup.anchor_left = 0.5; giveup.anchor_right = 0.5; giveup.anchor_top = 0.5; giveup.anchor_bottom = 0.5
+	giveup.offset_left = -75; giveup.offset_right = 75; giveup.offset_top = 258
+	giveup.pressed.connect(func(): _kp_done(false))
+	_mg_layer.add_child(giveup)
+	_kp_active = true
+	_kp_update()
+
+func _kp_btn(grid: GridContainer, label: String, code: String) -> void:
+	var b := Button.new(); b.text = label; b.custom_minimum_size = Vector2(88, 60)
+	b.pressed.connect(_kp_key.bind(code))
+	grid.add_child(b)
+
+func _kp_key(code: String) -> void:
+	if code == "clear":
+		_kp_input = ""
+	elif code == "enter":
+		_kp_check()
+		return
+	elif _kp_input.length() < _kp_answer.length():
+		_kp_input += code
+	_kp_update()
+
+func _kp_update() -> void:
+	var shown := _kp_input
+	while shown.length() < _kp_answer.length():
+		shown += "_"
+	var spaced := ""
+	for i in shown.length():
+		spaced += shown.substr(i, 1) + " "
+	_kp_display.text = spaced.strip_edges()
+
+func _kp_check() -> void:
+	if _kp_input == _kp_answer:
+		_kp_done(true)
+	else:
+		_kp_input = ""
+		_kp_update()
+		_kp_display.modulate = Color(1, 0.3, 0.3)
+		create_tween().tween_property(_kp_display, "modulate", Color(0.6, 1, 0.8), 0.4)
+
+func _kp_done(success: bool) -> void:
+	_kp_active = false
+	if _mg_layer:
+		_mg_layer.queue_free(); _mg_layer = null
+	Audio.play("confirm")
+	if success and _kp_beat.has("flag"):
+		GameState.set_flag(String(_kp_beat["flag"]), true)
+	_autosave()
+	var lk := String(_kp_beat.get("success", "")) if success else String(_kp_beat.get("fail", ""))
 	if lk != "":
 		Dialogue.say("", Loc.t(lk), _mg_continuation, SPEAKERS["narrator"]["color"])
 	else:
@@ -768,6 +862,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		if hit:
 			get_viewport().set_input_as_handled()
 			_mash_val = minf(100.0, _mash_val + 10.0)
+		return
+	if _kp_active:
+		if event is InputEventKey and event.pressed and not event.echo:
+			var kc: int = event.keycode
+			if kc >= KEY_0 and kc <= KEY_9:
+				if _kp_input.length() < _kp_answer.length():
+					_kp_input += str(kc - KEY_0)
+					_kp_update()
+			elif kc == KEY_BACKSPACE:
+				_kp_input = _kp_input.substr(0, maxi(0, _kp_input.length() - 1))
+				_kp_update()
+			elif kc == KEY_ENTER or kc == KEY_KP_ENTER:
+				_kp_check()
 		return
 	if _mg_active:
 		var lock := false
