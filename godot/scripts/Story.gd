@@ -196,6 +196,8 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "t3_shock"},
 		{"t": "line", "who": "narrator", "key": "t3_disgust"},
 		{"t": "line", "who": "narrator", "key": "t3_moment"},
+		{"t": "line", "who": "hero", "key": "t3_hero_boundary", "expr": "hero_old_calm"},
+		{"t": "line", "who": "narrator", "key": "t3_mono_still"},
 		{"t": "shake"},
 		{"t": "bg", "color": Color8(45, 27, 27), "desc": ""},
 		{"t": "line", "who": "narrator", "key": "t3_arrest"},
@@ -215,6 +217,8 @@ static func beats() -> Array:
 			 "frac": Vector2(0.50, 0.80), "wsize": Vector2(120, 60), "color": Color8(90, 90, 100), "exit": true}]}},
 		{"t": "line", "who": "narrator", "key": "t3_try"},
 		{"t": "line", "who": "narrator", "key": "t3_tired"},
+		{"t": "line", "who": "hero", "key": "t3_hero_jail_obsess", "expr": "hero_normal_pain"},
+		{"t": "line", "who": "narrator", "key": "t3_mono_crack"},
 		{"t": "bg", "color": Color8(10, 10, 10), "desc": "desc_3years", "img": "bg_prison"},
 		{"t": "line", "who": "narrator", "key": "t3_3years"},
 		{"t": "line", "who": "narrator", "key": "t3_blame_narr"},
@@ -249,6 +253,7 @@ static func beats() -> Array:
 			 "frac": Vector2(0.50, 0.74), "wsize": Vector2(120, 60), "color": Color8(90, 60, 60), "exit": true}]}},
 		{"t": "line", "who": "hero", "key": "t3_restart", "expr": "hero_normal_calm"},
 		{"t": "line", "who": "narrator", "key": "t3_waver"},
+		{"t": "line", "who": "hero", "key": "t3_hero_callback", "expr": "hero_normal_angry"},
 		{"t": "line", "who": "hero", "key": "t3_burst", "expr": "hero_normal_angry"},
 		{"t": "shake"},
 		{"t": "line", "who": "narrator", "key": "t3_flee"},
@@ -256,6 +261,7 @@ static func beats() -> Array:
 		{"t": "bg", "color": Color8(0, 0, 0), "desc": ""},
 		{"t": "line", "who": "narrator", "key": "t3_hit", "cg": "cg_death"},
 		{"t": "line", "who": "narrator", "key": "t3_die"},
+		{"t": "line", "who": "narrator", "key": "t3_mono_realize"},
 
 		# ═══ 결과 ═══
 		{"t": "line", "who": "system", "key": "res_sys_end"},
