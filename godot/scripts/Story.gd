@@ -154,6 +154,9 @@ static func beats() -> Array:
 		{"t": "line", "who": "hero", "key": "t2_isit", "expr": "hero_normal_surprise"},
 		{"t": "line", "who": "narrator", "key": "t2_dog"},
 		{"t": "line", "who": "narrator", "key": "t2_monolog1"},
+		{"t": "minigame", "game": "timing", "prompt": "mg_treat_prompt",
+		 "target": 0.5, "halfwidth": 0.11, "speed": 1.0,
+		 "success_gauge": 1, "fail_gauge": 0, "success": "mg_treat_win", "fail": "mg_treat_lose"},
 		{"t": "explore", "data": {"goal": "ex_puppy_goal", "objects": [
 			{"name": "ex_puppy_bowl_name", "lines": "ex_puppy_bowl_lines", "img": "obj_puppy_bowl",
 			 "frac": Vector2(0.20, 0.60), "wsize": Vector2(120, 80), "color": Color8(179, 128, 77), "clue": true},
@@ -198,6 +201,14 @@ static func beats() -> Array:
 		{"t": "line", "who": "heroine", "key": "t3_father"},
 		{"t": "line", "who": "narrator", "key": "t3_shock"},
 		{"t": "line", "who": "narrator", "key": "t3_disgust"},
+		# 부녀 집 둘러보기 — '자상함'으로도, '통제'로도 읽히는 애매한 흔적 (1~2개)
+		{"t": "explore", "data": {"goal": "ex_home_goal", "objects": [
+			{"name": "ex_home_note_name", "lines": "ex_home_note_lines", "img": "obj_home_note",
+			 "frac": Vector2(0.30, 0.45), "wsize": Vector2(120, 90), "color": Color8(150, 130, 90), "clue": true},
+			{"name": "ex_home_photo_name", "lines": "ex_home_photo_lines", "img": "obj_home_photo",
+			 "frac": Vector2(0.70, 0.45), "wsize": Vector2(110, 90), "color": Color8(120, 110, 130), "clue": true},
+			{"name": "ex_home_exit_name", "lines": "ex_home_exit_lines", "img": "obj_home_exit",
+			 "frac": Vector2(0.50, 0.80), "wsize": Vector2(120, 60), "color": Color8(90, 90, 100), "exit": true}]}},
 		{"t": "line", "who": "narrator", "key": "t3_moment"},
 		{"t": "line", "who": "hero", "key": "t3_hero_boundary", "expr": "hero_old_calm"},
 		{"t": "line", "who": "narrator", "key": "t3_mono_still"},
