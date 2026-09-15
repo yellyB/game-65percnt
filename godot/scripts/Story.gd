@@ -25,6 +25,13 @@ static func beats() -> Array:
 		{"t": "line", "who": "heroine", "key": "pr_heroine_who"},
 		{"t": "line", "who": "hero", "key": "pr_hero_mine", "expr": "hero_normal_calm"},
 		{"t": "line", "who": "narrator", "key": "pr_mono_romantic"},
+		# 일상 티키타카 (진짜 다정한 커플 케미 + 65% 떡밥)
+		{"t": "line", "who": "narrator", "key": "pr_banter_narr"},
+		{"t": "line", "who": "hero", "key": "pr_banter_hero1", "expr": "hero_normal_smile"},
+		{"t": "line", "who": "heroine", "key": "pr_banter_heroine1"},
+		{"t": "line", "who": "hero", "key": "pr_banter_hero2", "expr": "hero_normal_calm"},
+		{"t": "line", "who": "heroine", "key": "pr_banter_heroine2"},
+		{"t": "line", "who": "narrator", "key": "pr_banter_mono"},
 		# 축제 둘러보기 (거리↔골목 + 줌인 + 숨은 고양이) → 부스 골목으로
 		# ▼ 다중 방(거리↔골목) + 줌인(포장마차) 쇼케이스
 		{"t": "explore", "data": {"goal": "ex_fest_goal", "start": "street", "rooms": {
@@ -156,6 +163,11 @@ static func beats() -> Array:
 		{"t": "line", "who": "system", "key": "mid_sys_end"},
 		{"t": "line", "who": "hero", "key": "t1_debrief_hero", "expr": "hero_normal_calm"},
 		{"t": "line", "who": "narrator", "key": "t1_debrief_mono"},
+		# 디브리핑 심화 — 현실의 조건부 선호를 가볍게 (양념)
+		{"t": "line", "who": "hero", "key": "t1_debrief_hero2", "expr": "hero_normal_smile"},
+		{"t": "line", "who": "heroine", "key": "t1_debrief_heroine"},
+		{"t": "line", "who": "hero", "key": "t1_debrief_hero3", "expr": "hero_normal_smile"},
+		{"t": "line", "who": "narrator", "key": "t1_debrief_mono2"},
 		{"t": "line", "who": "hero", "key": "mid_hero_real", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "heroine", "key": "mid_heroine_ok"},
 
@@ -206,6 +218,10 @@ static func beats() -> Array:
 			{"key": "t2_c2", "gauge": -2, "reply": "t2_c2r"}]},
 		{"t": "line", "who": "hero", "key": "t2_debrief_hero", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "narrator", "key": "t2_debrief_mono"},
+		# 디브리핑 소소한 대화 — 보살핌에 감동 + '의존을 예뻐함' 양념
+		{"t": "line", "who": "heroine", "key": "t2_debrief_heroine"},
+		{"t": "line", "who": "hero", "key": "t2_debrief_hero2", "expr": "hero_normal_smile"},
+		{"t": "line", "who": "narrator", "key": "t2_debrief_mono2"},
 		{"t": "line", "who": "heroine", "key": "t2_human"},
 
 		# ═══ 테스트 3 · 부녀 ═══
@@ -250,6 +266,13 @@ static func beats() -> Array:
 		{"t": "minigame", "game": "keypad", "answer": "4231", "hint": "kp_prison_hint",
 		 "success": "kp_prison_reveal", "fail": "kp_prison_giveup", "flag": "truth"},
 		{"t": "line", "who": "narrator", "key": "t3_try"},
+		# 면회 몽타주 — 헌신 → 반복 → (지침)
+		{"t": "line", "who": "narrator", "key": "t3_v1_narr"},
+		{"t": "line", "who": "hero", "key": "t3_v1_hero", "expr": "hero_normal_pain"},
+		{"t": "line", "who": "narrator", "key": "t3_v1_mono"},
+		{"t": "line", "who": "narrator", "key": "t3_v2_narr"},
+		{"t": "line", "who": "hero", "key": "t3_v2_hero", "expr": "hero_normal_pain"},
+		{"t": "line", "who": "narrator", "key": "t3_v2_mono"},
 		{"t": "line", "who": "narrator", "key": "t3_tired"},
 		{"t": "line", "who": "hero", "key": "t3_hero_jail_obsess", "expr": "hero_normal_pain"},
 		{"t": "line", "who": "narrator", "key": "t3_mono_crack"},
@@ -270,7 +293,11 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "t3_release"},
 		{"t": "line", "who": "narrator", "key": "t3_relief"},
 		{"t": "line", "who": "narrator", "key": "t3_dating"},
+		# 출소~재회 사이 — 새 사람의 편안함 · 죄책감 · 닳아버린 마음
+		{"t": "line", "who": "narrator", "key": "t3_rel_new_narr"},
+		{"t": "line", "who": "narrator", "key": "t3_rel_guilt"},
 		{"t": "line", "who": "narrator", "key": "t3_debauch"},
+		{"t": "line", "who": "narrator", "key": "t3_rel_worn"},
 		{"t": "line", "who": "narrator", "key": "t3_meet"},
 		{"t": "line", "who": "hero", "key": "t3_cheat", "expr": "hero_normal_angry"},
 		{"t": "line", "who": "heroine", "key": "t3_youtoo2"},
@@ -307,7 +334,12 @@ static func beats() -> Array:
 		{"t": "line", "who": "hero", "key": "res_hero_wow", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "narrator", "key": "res_mono_wake2"},
 		{"t": "score"},
+		# 엔딩 직전 정적 — 밑바닥까지 본 두 사람의 긴 침묵
+		{"t": "line", "who": "narrator", "key": "res_silence_narr"},
+		{"t": "line", "who": "hero", "key": "res_silence_hero", "expr": "hero_normal_calm"},
+		{"t": "line", "who": "narrator", "key": "res_silence_mono"},
+		{"t": "line", "who": "narrator", "key": "res_silence_narr2"},
 
-		# ═══ 에필로그 (게이지로 분기) ═══
+		# ═══ 에필로그 (진엔딩 하나) ═══
 		{"t": "ending"},
 	]
