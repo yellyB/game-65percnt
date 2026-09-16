@@ -404,6 +404,26 @@ func _show_claw(b: Dictionary) -> void:
 	game.finished.connect(func(win: bool): _on_minigame_result(b, win))
 	_mg_layer.add_child(game)
 
+# ── 분식 부스 (메뉴 골라 먹기) ──
+func _show_food_booth(f: Dictionary) -> void:
+	var intro := String(f.get("intro", ""))
+	if intro != "":
+		Dialogue.say("", Loc.t(intro), func(): _food_menu(f), SPEAKERS["narrator"]["color"])
+	else:
+		_food_menu(f)
+
+func _food_menu(f: Dictionary) -> void:
+	var options: Array = f["options"]
+	var display: Array = []
+	for o in options:
+		display.append({"text": Loc.t(o["key"])})
+	Dialogue.say_choices(_speaker_name("heroine"), Loc.t(f.get("prompt", "")), display,
+		func(idx: int): _food_picked(options, idx), SPEAKERS["heroine"]["color"])
+
+func _food_picked(options: Array, idx: int) -> void:
+	var o: Dictionary = options[idx]
+	Dialogue.say("", Loc.t(o["reply"]), _reopen_hub, SPEAKERS["narrator"]["color"])
+
 # ── 사격 · 풍선 맞추기 ──
 func _show_balloon(b: Dictionary) -> void:
 	_mg_layer = CanvasLayer.new(); _mg_layer.layer = 24; add_child(_mg_layer)
@@ -805,13 +825,16 @@ func _make_booth(booth: Dictionary, idx: int, vp: Vector2) -> void:
 				nm.modulate = Color(1, 1, 1, 0.5)
 				if _hub_played.size() >= _hub_play_total:
 					_unlock_hub_exit()
-				var g: Dictionary = booth["game"]
 				if _hub_node:
 					_hub_node.visible = false
-				if g.has("intro"):
-					Dialogue.say("", Loc.t(g["intro"]), func(): _launch_minigame(g, _reopen_hub), SPEAKERS["narrator"]["color"])
+				if booth.has("food"):
+					_show_food_booth(booth["food"])
 				else:
-					_launch_minigame(g, _reopen_hub))
+					var g: Dictionary = booth["game"]
+					if g.has("intro"):
+						Dialogue.say("", Loc.t(g["intro"]), func(): _launch_minigame(g, _reopen_hub), SPEAKERS["narrator"]["color"])
+					else:
+						_launch_minigame(g, _reopen_hub))
 	_hub_node.add_child(panel)
 
 func _unlock_hub_exit() -> void:

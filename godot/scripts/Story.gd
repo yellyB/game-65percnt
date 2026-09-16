@@ -63,15 +63,20 @@ static func beats() -> Array:
 		}}},
 		# 오락 부스 허브 → 사랑 측정 부스(진행). 다른 부스 다 봐야 열림.
 		{"t": "hub", "prompt": "hub_prompt", "booths": [
-			{"name": "booth_cat", "frac": Vector2(0.20, 0.40), "color": Color8(70, 62, 110),
+			{"name": "booth_cat", "frac": Vector2(0.17, 0.40), "color": Color8(70, 62, 110),
 			 "game": {"game": "trapcat", "radius": 6, "seeds": 14, "intro": "mg_cat_intro",
 				"success_gauge": 3, "fail_gauge": 0, "success": "mg_cat_win", "fail": "mg_cat_lose"}},
-			{"name": "booth_claw", "frac": Vector2(0.50, 0.40), "color": Color8(180, 90, 110),
+			{"name": "booth_claw", "frac": Vector2(0.39, 0.40), "color": Color8(180, 90, 110),
 			 "game": {"game": "claw", "speed": 0.8, "tolerance": 40, "intro": "mg_claw_intro",
 				"success_gauge": 4, "fail_gauge": -1, "success": "mg_claw_win", "fail": "mg_claw_lose"}},
-			{"name": "booth_shoot", "frac": Vector2(0.80, 0.40), "color": Color8(90, 150, 130),
+			{"name": "booth_shoot", "frac": Vector2(0.61, 0.40), "color": Color8(90, 150, 130),
 			 "game": {"game": "balloon", "intro": "mg_shoot_intro",
 				"success_gauge": 3, "fail_gauge": 0, "success": "mg_shoot_win", "fail": "mg_shoot_lose"}},
+			{"name": "booth_food", "frac": Vector2(0.83, 0.40), "color": Color8(200, 140, 80),
+			 "food": {"intro": "mg_food_intro", "prompt": "food_prompt", "options": [
+				{"key": "food_tteok", "reply": "food_tteok_r"},
+				{"key": "food_sundae", "reply": "food_sundae_r"},
+				{"key": "food_odeng", "reply": "food_odeng_r"}]}},
 			{"name": "booth_lovetest", "frac": Vector2(0.50, 0.74), "color": Color8(200, 80, 120), "exit": true}]},
 		{"t": "line", "who": "hero", "key": "pr_hero_wanna", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "heroine", "key": "pr_heroine_ok"},
