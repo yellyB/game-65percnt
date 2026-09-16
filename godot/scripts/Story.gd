@@ -155,6 +155,12 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "t1_date_warm"},
 		{"t": "line", "who": "hero", "key": "t1_hero_date2", "expr": "hero_female_calm"},
 		{"t": "line", "who": "narrator", "key": "t1_mono_date"},
+		# 한강 2인용 자전거 — 중심잡기 미니게임
+		{"t": "line", "who": "narrator", "key": "t1_bike_narr"},
+		{"t": "line", "who": "hero", "key": "t1_hero_bike", "expr": "hero_female_calm"},
+		{"t": "minigame", "game": "bike", "duration": 12.0,
+		 "success": "t1_bike_win", "fail": "t1_bike_lose"},
+		{"t": "line", "who": "heroine", "key": "t1_bike_after"},
 		{"t": "line", "who": "narrator", "key": "t1_date_fun"},
 		{"t": "line", "who": "hero", "key": "t1_hero_publiceye", "expr": "hero_female_calm"},
 		{"t": "line", "who": "narrator", "key": "t1_mono_crackle"},
