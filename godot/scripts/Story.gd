@@ -251,7 +251,7 @@ static func beats() -> Array:
 		# ═══ 테스트 3 · 부녀 ═══
 		{"t": "bg", "color": Color8(110, 110, 110), "desc": "desc_test3", "img": "bg_family_home"},
 		{"t": "fade"},
-		{"t": "line", "who": "narrator", "key": "t3_human"},
+		{"t": "line", "who": "heroine", "key": "t3_human"},
 		{"t": "line", "who": "system", "key": "t3_confirm"},
 		{"t": "line", "who": "narrator", "key": "t3_cert"},
 		{"t": "line", "who": "heroine", "key": "t3_father"},
