@@ -364,6 +364,7 @@ func _launch_minigame(g: Dictionary, cont: Callable) -> void:
 	match String(g.get("game", "timing")):
 		"trapcat": _show_trapcat(g)
 		"claw":    _show_claw(g)
+		"balloon": _show_balloon(g)
 		"mash":    _show_mash(g)
 		"keypad":  _show_keypad(g)
 		"pattern": _show_pattern(g)
@@ -400,6 +401,19 @@ func _show_claw(b: Dictionary) -> void:
 	game.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if b.has("speed"): game.speed_frac = float(b["speed"])
 	if b.has("tolerance"): game.tolerance = float(b["tolerance"])
+	game.finished.connect(func(win: bool): _on_minigame_result(b, win))
+	_mg_layer.add_child(game)
+
+# ── 사격 · 풍선 맞추기 ──
+func _show_balloon(b: Dictionary) -> void:
+	_mg_layer = CanvasLayer.new(); _mg_layer.layer = 24; add_child(_mg_layer)
+	var dim := ColorRect.new(); dim.color = Color8(30, 30, 40)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mg_layer.add_child(dim)
+	var game = load("res://scripts/BalloonShoot.gd").new()
+	game.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if b.has("need"): game.need = int(b["need"])
+	if b.has("time_limit"): game.time_limit = float(b["time_limit"])
 	game.finished.connect(func(win: bool): _on_minigame_result(b, win))
 	_mg_layer.add_child(game)
 
@@ -791,7 +805,13 @@ func _make_booth(booth: Dictionary, idx: int, vp: Vector2) -> void:
 				nm.modulate = Color(1, 1, 1, 0.5)
 				if _hub_played.size() >= _hub_play_total:
 					_unlock_hub_exit()
-				_launch_minigame(booth["game"], _reopen_hub))
+				var g: Dictionary = booth["game"]
+				if _hub_node:
+					_hub_node.visible = false
+				if g.has("intro"):
+					Dialogue.say("", Loc.t(g["intro"]), func(): _launch_minigame(g, _reopen_hub), SPEAKERS["narrator"]["color"])
+				else:
+					_launch_minigame(g, _reopen_hub))
 	_hub_node.add_child(panel)
 
 func _unlock_hub_exit() -> void:

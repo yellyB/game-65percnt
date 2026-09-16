@@ -14,6 +14,9 @@ static func beats() -> Array:
 		# ═══ 프롤로그 · 축제 ═══
 		{"t": "bg", "color": Color8(232, 168, 124), "desc": "desc_festival", "img": "bg_festival"},
 		{"t": "line", "who": "narrator", "key": "pr_walk1"},
+		# 축제 간략 소개 (처음 온 동네 · 우연히 들른 작은 축제)
+		{"t": "line", "who": "narrator", "key": "pr_fest_intro1"},
+		{"t": "line", "who": "narrator", "key": "pr_fest_intro2"},
 		# 케미 + 외모 씨앗 (조건부 사랑 복선)
 		{"t": "line", "who": "hero", "key": "pr_hero_cotton", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "heroine", "key": "pr_heroine_cotton"},
@@ -60,13 +63,16 @@ static func beats() -> Array:
 		}}},
 		# 오락 부스 허브 → 사랑 측정 부스(진행). 다른 부스 다 봐야 열림.
 		{"t": "hub", "prompt": "hub_prompt", "booths": [
-			{"name": "booth_cat", "frac": Vector2(0.27, 0.42), "color": Color8(70, 62, 110),
-			 "game": {"game": "trapcat", "radius": 6, "seeds": 14,
+			{"name": "booth_cat", "frac": Vector2(0.20, 0.40), "color": Color8(70, 62, 110),
+			 "game": {"game": "trapcat", "radius": 6, "seeds": 14, "intro": "mg_cat_intro",
 				"success_gauge": 3, "fail_gauge": 0, "success": "mg_cat_win", "fail": "mg_cat_lose"}},
-			{"name": "booth_claw", "frac": Vector2(0.73, 0.42), "color": Color8(180, 90, 110),
-			 "game": {"game": "claw", "speed": 0.8, "tolerance": 40,
+			{"name": "booth_claw", "frac": Vector2(0.50, 0.40), "color": Color8(180, 90, 110),
+			 "game": {"game": "claw", "speed": 0.8, "tolerance": 40, "intro": "mg_claw_intro",
 				"success_gauge": 4, "fail_gauge": -1, "success": "mg_claw_win", "fail": "mg_claw_lose"}},
-			{"name": "booth_lovetest", "frac": Vector2(0.50, 0.72), "color": Color8(200, 80, 120), "exit": true}]},
+			{"name": "booth_shoot", "frac": Vector2(0.80, 0.40), "color": Color8(90, 150, 130),
+			 "game": {"game": "balloon", "intro": "mg_shoot_intro",
+				"success_gauge": 3, "fail_gauge": 0, "success": "mg_shoot_win", "fail": "mg_shoot_lose"}},
+			{"name": "booth_lovetest", "frac": Vector2(0.50, 0.74), "color": Color8(200, 80, 120), "exit": true}]},
 		{"t": "line", "who": "hero", "key": "pr_hero_wanna", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "heroine", "key": "pr_heroine_ok"},
 		{"t": "line", "who": "narrator", "key": "pr_walk2"},
