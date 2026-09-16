@@ -98,7 +98,7 @@ static func beats() -> Array:
 		{"t": "line", "who": "system", "key": "pr_sys_desc1"},
 		{"t": "line", "who": "system", "key": "pr_sys_desc2"},
 		{"t": "line", "who": "system", "key": "pr_sys_desc3"},
-		{"t": "line", "who": "narrator", "key": "pr_mono_sure"},
+		{"t": "line", "who": "heroine", "key": "pr_mono_sure"},
 		{"t": "line", "who": "hero", "key": "pr_hero_justgame", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "narrator", "key": "pr_narr_dark"},
 
@@ -131,7 +131,7 @@ static func beats() -> Array:
 			{"name": "ex_gm_face_name", "lines": "ex_gm_face_lines", "img": "obj_gm_face",
 			 "frac": Vector2(0.50, 0.86), "wsize": Vector2(160, 55), "color": Color8(120, 120, 140), "exit": true}]}},
 		{"t": "line", "who": "heroine", "key": "t1_male"},
-		{"t": "line", "who": "narrator", "key": "t1_ponder"},
+		{"t": "line", "who": "heroine", "key": "t1_ponder"},
 		{"t": "line", "who": "hero", "key": "t1_keepstyle", "expr": "hero_female_calm"},
 		{"t": "choice", "who": "heroine", "prompt": "t1_choice_prompt", "options": [
 			{"key": "t1_c1", "gauge": 3, "reply": "t1_c1r"},
@@ -166,10 +166,11 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "t1_mono_crackle"},
 		# 방탈출: 남주가 바꾼 휴대폰 패턴 → 감시 정황
 		{"t": "line", "who": "narrator", "key": "t1_phone_intro"},
+		{"t": "line", "who": "heroine", "key": "t1_phone_say"},
 		{"t": "minigame", "game": "pattern", "answer_pattern": [0, 3, 6, 7, 8], "show_hint": true,
 		 "hint": "pattern_hint", "success": "t1_phone_reveal", "fail": "t1_phone_giveup", "flag": "control_seen"},
 		{"t": "line", "who": "narrator", "key": "t1_night"},
-		{"t": "line", "who": "narrator", "key": "t1_confused"},
+		{"t": "line", "who": "heroine", "key": "t1_confused"},
 		{"t": "line", "who": "heroine", "key": "t1_why"},
 		# 머뭇거리는 순간 분기 (강제 진행 / 이대로) — 둘 다 '안 함'으로 수렴
 		{"t": "choice", "who": "heroine", "prompt": "t1_night_prompt", "options": [
