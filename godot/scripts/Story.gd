@@ -115,17 +115,22 @@ static func beats() -> Array:
 		{"t": "line", "who": "heroine", "key": "t1_cheatstory"},
 		{"t": "line", "who": "hero", "key": "t1_youtoo", "expr": "hero_female_calm"},
 		{"t": "line", "who": "narrator", "key": "t1_voice"},
-		{"t": "line", "who": "heroine", "key": "t1_male"},
+		{"t": "line", "who": "narrator", "key": "t1_mirror_intro"},
+		# 거울 — 얼굴 위는 안 비치고 목 아래만. 부위별 클릭으로 반전 자각
 		{"t": "explore", "data": {"goal": "ex_gender_goal", "objects": [
-			{"name": "ex_gender_mirror_name", "lines": "ex_gender_mirror_lines", "img": "obj_gender_mirror",
-			 "frac": Vector2(0.50, 0.30), "wsize": Vector2(120, 150), "color": Color8(180, 200, 220), "clue": true},
-			{"name": "ex_gender_hand_name", "lines": "ex_gender_hand_lines", "img": "obj_gender_hand",
-			 "frac": Vector2(0.22, 0.58), "wsize": Vector2(100, 80), "color": Color8(210, 180, 160), "clue": true},
-			{"name": "ex_gender_clothes_name", "lines": "ex_gender_clothes_lines", "img": "obj_gender_clothes",
-			 "frac": Vector2(0.78, 0.52), "wsize": Vector2(100, 110), "color": Color8(150, 150, 170), "clue": true},
-			{"name": "ex_gender_adapt_name", "lines": "ex_gender_adapt_lines", "img": "obj_gender_adapt",
-			 "frac": Vector2(0.50, 0.82), "wsize": Vector2(130, 60), "color": Color8(120, 120, 140), "exit": true}]}},
-		{"t": "line", "who": "narrator", "key": "t1_bodycheck"},
+			{"name": "ex_gm_neck_name", "lines": "ex_gm_neck_lines", "img": "obj_gm_neck",
+			 "frac": Vector2(0.50, 0.18), "wsize": Vector2(70, 60), "color": Color8(210, 180, 160), "clue": true},
+			{"name": "ex_gm_shoulder_name", "lines": "ex_gm_shoulder_lines", "img": "obj_gm_shoulder",
+			 "frac": Vector2(0.30, 0.31), "wsize": Vector2(120, 70), "color": Color8(150, 150, 170), "clue": true},
+			{"name": "ex_gm_chest_name", "lines": "ex_gm_chest_lines", "img": "obj_gm_chest",
+			 "frac": Vector2(0.52, 0.42), "wsize": Vector2(110, 80), "color": Color8(200, 175, 160), "clue": true},
+			{"name": "ex_gm_hand_name", "lines": "ex_gm_hand_lines", "img": "obj_gm_hand",
+			 "frac": Vector2(0.74, 0.56), "wsize": Vector2(90, 80), "color": Color8(210, 185, 165), "clue": true},
+			{"name": "ex_gm_waist_name", "lines": "ex_gm_waist_lines", "img": "obj_gm_waist",
+			 "frac": Vector2(0.48, 0.64), "wsize": Vector2(110, 80), "color": Color8(150, 150, 170), "clue": true},
+			{"name": "ex_gm_face_name", "lines": "ex_gm_face_lines", "img": "obj_gm_face",
+			 "frac": Vector2(0.50, 0.86), "wsize": Vector2(160, 55), "color": Color8(120, 120, 140), "exit": true}]}},
+		{"t": "line", "who": "heroine", "key": "t1_male"},
 		{"t": "line", "who": "narrator", "key": "t1_ponder"},
 		{"t": "line", "who": "hero", "key": "t1_keepstyle", "expr": "hero_female_calm"},
 		{"t": "choice", "who": "heroine", "prompt": "t1_choice_prompt", "options": [
@@ -160,12 +165,13 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "t1_night"},
 		{"t": "line", "who": "narrator", "key": "t1_confused"},
 		{"t": "line", "who": "heroine", "key": "t1_why"},
+		# 머뭇거리는 순간 분기 (강제 진행 / 이대로) — 둘 다 '안 함'으로 수렴
+		{"t": "choice", "who": "heroine", "prompt": "t1_night_prompt", "options": [
+			{"key": "t1_force", "reply": "t1_force_r"},
+			{"key": "t1_asis", "reply": "t1_asis_r"}]},
+		{"t": "line", "who": "narrator", "key": "t1_stop"},
 		{"t": "line", "who": "hero", "key": "t1_cant", "expr": "hero_female_pain"},
 		{"t": "line", "who": "hero", "key": "t1_hero_original", "expr": "hero_female_pain"},
-		{"t": "choice", "who": "heroine", "prompt": "t1_night_prompt", "options": [
-			{"key": "t1_n1", "gauge": 4, "reply": "t1_n1r"},
-			{"key": "t1_n2", "gauge": -3, "reply": "t1_n2r"},
-			{"key": "t1_n3", "gauge": -5, "reply": "t1_n3r"}]},
 		{"t": "line", "who": "narrator", "key": "t1_mono_understand"},
 
 		# ═══ 테스트 1 종료 ═══
