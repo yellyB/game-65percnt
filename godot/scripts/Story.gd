@@ -39,14 +39,6 @@ static func beats() -> Array:
 		# ▼ 다중 방(거리↔골목) + 줌인(포장마차) 쇼케이스
 		{"t": "explore", "data": {"goal": "ex_fest_goal", "start": "street", "rooms": {
 			"street": {"objects": [
-				# 포장마차: 클릭 시 줌인 → 상세 화면에서 단서
-				{"name": "ex_fest_stall_name", "img": "obj_festival_stall",
-				 "frac": Vector2(0.20, 0.42), "wsize": Vector2(120, 90), "color": Color8(179, 128, 77),
-				 "detail": {"color": Color8(58, 44, 34), "objects": [
-					{"name": "ex_fest_pot_name", "lines": "ex_fest_pot_lines", "img": "obj_festival_pot",
-					 "frac": Vector2(0.40, 0.48), "wsize": Vector2(150, 130), "color": Color8(180, 160, 120), "clue": true},
-					{"name": "ex_fest_menu_name", "lines": "ex_fest_menu_lines", "img": "obj_festival_menu",
-					 "frac": Vector2(0.72, 0.40), "wsize": Vector2(110, 150), "color": Color8(220, 220, 200)}]}},
 				{"name": "ex_fest_bench_name", "lines": "ex_fest_bench_lines", "img": "obj_festival_bench",
 				 "frac": Vector2(0.30, 0.70), "wsize": Vector2(110, 70), "color": Color8(150, 120, 90), "clue": true},
 				{"name": "ex_fest_door_alley", "goto": "alley",
