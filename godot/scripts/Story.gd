@@ -41,6 +41,12 @@ static func beats() -> Array:
 			"street": {"objects": [
 				{"name": "ex_fest_bench_name", "lines": "ex_fest_bench_lines", "img": "obj_festival_bench",
 				 "frac": Vector2(0.30, 0.70), "wsize": Vector2(110, 70), "color": Color8(150, 120, 90), "clue": true},
+				# 소원 리본 나무 (복선: 영원한 사랑·집착)
+				{"name": "ex_fest_ribbon_name", "lines": "ex_fest_ribbon_lines", "img": "obj_festival_ribbon",
+				 "frac": Vector2(0.16, 0.44), "wsize": Vector2(110, 130), "color": Color8(170, 140, 170), "clue": true},
+				# 타로·사주 노점 (복선: 사랑을 재는 것 / AI 궁합과 대조)
+				{"name": "ex_fest_tarot_name", "lines": "ex_fest_tarot_lines", "img": "obj_festival_tarot",
+				 "frac": Vector2(0.72, 0.42), "wsize": Vector2(120, 110), "color": Color8(90, 70, 130), "clue": true},
 				{"name": "ex_fest_door_alley", "goto": "alley",
 				 "frac": Vector2(0.92, 0.62), "wsize": Vector2(80, 130), "color": Color8(45, 45, 65)},
 				{"name": "ex_fest_booths_name", "lines": "ex_fest_booths_lines", "img": "obj_festival_tent",
@@ -48,6 +54,9 @@ static func beats() -> Array:
 			"alley": {"objects": [
 				{"name": "ex_fest_poster_name", "lines": "ex_fest_poster_lines", "img": "obj_festival_poster",
 				 "frac": Vector2(0.38, 0.45), "wsize": Vector2(110, 150), "color": Color8(120, 110, 100), "clue": true},
+				# 낡은 거울 (복선: 테스트1 거울 자각 연출과 연결)
+				{"name": "ex_fest_mirror_name", "lines": "ex_fest_mirror_lines", "img": "obj_festival_mirror",
+				 "frac": Vector2(0.56, 0.72), "wsize": Vector2(100, 130), "color": Color8(120, 130, 140), "clue": true},
 				{"name": "ex_fest_cat_name", "lines": "ex_fest_cat_lines", "img": "obj_festival_cat",
 				 "frac": Vector2(0.74, 0.55), "wsize": Vector2(70, 70), "color": Color8(230, 216, 128), "hidden": true, "gauge": 2},
 				{"name": "ex_fest_door_street", "goto": "street",
@@ -56,7 +65,7 @@ static func beats() -> Array:
 		# 오락 부스 허브 → 사랑 측정 부스(진행). 다른 부스 다 봐야 열림.
 		{"t": "hub", "prompt": "hub_prompt", "booths": [
 			{"name": "booth_cat", "frac": Vector2(0.17, 0.40), "color": Color8(70, 62, 110),
-			 "game": {"game": "trapcat", "radius": 6, "seeds": 14, "intro": "mg_cat_intro",
+			 "game": {"game": "trapcat", "radius": 6, "seeds": 12, "intro": "mg_cat_intro",
 				"success_gauge": 3, "fail_gauge": 0, "success": "mg_cat_win", "fail": "mg_cat_lose"}},
 			{"name": "booth_claw", "frac": Vector2(0.39, 0.40), "color": Color8(180, 90, 110),
 			 "game": {"game": "claw", "speed": 0.8, "tolerance": 40, "intro": "mg_claw_intro",
@@ -65,10 +74,20 @@ static func beats() -> Array:
 			 "game": {"game": "balloon", "intro": "mg_shoot_intro",
 				"success_gauge": 3, "fail_gauge": 0, "success": "mg_shoot_win", "fail": "mg_shoot_lose"}},
 			{"name": "booth_food", "frac": Vector2(0.83, 0.40), "color": Color8(200, 140, 80),
-			 "food": {"intro": "mg_food_intro", "prompt": "food_prompt", "options": [
-				{"key": "food_tteok", "reply": "food_tteok_r"},
-				{"key": "food_sundae", "reply": "food_sundae_r"},
-				{"key": "food_odeng", "reply": "food_odeng_r"}]}},
+			 "food": {"intro": "mg_food_intro", "steps": [
+				{"prompt": "food_q1", "options": [
+					{"key": "food_tteok", "reply": "food_tteok_r"},
+					{"key": "food_jjol", "reply": "food_jjol_r"}]},
+				{"prompt": "food_q2", "options": [
+					{"key": "food_kimbap", "reply": "food_kimbap_r"},
+					{"key": "food_sundae", "reply": "food_sundae_r"}]},
+				{"prompt": "food_q3", "options": [
+					{"key": "food_odeng", "reply": "food_odeng_r"},
+					{"key": "food_twigim", "reply": "food_twigim_r"}]},
+				{"prompt": "food_q4", "options": [
+					{"key": "food_cider", "reply": "food_cider_r"},
+					{"key": "food_cola", "reply": "food_cola_r"}]}]}},
+			{"name": "booth_back", "frac": Vector2(0.85, 0.78), "color": Color8(70, 78, 96), "back": true},
 			{"name": "booth_lovetest", "frac": Vector2(0.50, 0.74), "color": Color8(200, 80, 120), "exit": true}]},
 		{"t": "line", "who": "hero", "key": "pr_hero_wanna", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "heroine", "key": "pr_heroine_ok"},
@@ -82,6 +101,15 @@ static func beats() -> Array:
 			 "frac": Vector2(0.65, 0.35), "wsize": Vector2(120, 100), "color": Color8(90, 110, 160), "clue": true},
 			{"name": "ex_tent_manual_name", "lines": "ex_tent_manual_lines", "img": "obj_tent_manual",
 			 "frac": Vector2(0.25, 0.45), "wsize": Vector2(100, 80), "color": Color8(200, 200, 180), "clue": true},
+			# 수정구슬: AI 시대에 안 어울리는 올드한 소품 (독백)
+			{"name": "ex_tent_orb_name", "lines": "ex_tent_orb_lines", "img": "obj_tent_orb",
+			 "frac": Vector2(0.42, 0.30), "wsize": Vector2(90, 90), "color": Color8(150, 140, 190), "clue": true},
+			# 모니터: 기계에 대한 감상
+			{"name": "ex_tent_monitor_name", "lines": "ex_tent_monitor_lines", "img": "obj_tent_monitor",
+			 "frac": Vector2(0.82, 0.58), "wsize": Vector2(110, 90), "color": Color8(80, 130, 130), "clue": true},
+			# 천막 입구 문: 밖은 아무도 관심 없음
+			{"name": "ex_tent_door_name", "lines": "ex_tent_door_lines", "img": "obj_tent_door",
+			 "frac": Vector2(0.10, 0.66), "wsize": Vector2(90, 140), "color": Color8(60, 55, 70)},
 			{"name": "ex_tent_chair_name", "lines": "ex_tent_chair_lines", "img": "obj_tent_chair",
 			 "frac": Vector2(0.50, 0.74), "wsize": Vector2(130, 70), "color": Color8(120, 110, 100), "exit": true}]}},
 		{"t": "line", "who": "system", "key": "pr_sys_welcome"},
@@ -93,11 +121,27 @@ static func beats() -> Array:
 		{"t": "line", "who": "heroine", "key": "pr_mono_sure"},
 		{"t": "line", "who": "hero", "key": "pr_hero_justgame", "expr": "hero_normal_smile"},
 		{"t": "line", "who": "narrator", "key": "pr_narr_dark"},
+		# 시뮬레이션 진입 — 감각 묘사 10줄 (급전개 완화)
+		{"t": "line", "who": "narrator", "key": "sim_enter1"},
+		{"t": "line", "who": "heroine", "key": "sim_enter2"},
+		{"t": "line", "who": "narrator", "key": "sim_enter3"},
+		{"t": "line", "who": "narrator", "key": "sim_enter4"},
+		{"t": "line", "who": "heroine", "key": "sim_enter5"},
+		{"t": "line", "who": "narrator", "key": "sim_enter6"},
+		{"t": "line", "who": "narrator", "key": "sim_enter7"},
+		{"t": "line", "who": "narrator", "key": "sim_enter8"},
+		{"t": "line", "who": "heroine", "key": "sim_enter9"},
+		{"t": "line", "who": "narrator", "key": "sim_enter10"},
 
 		# ═══ 테스트 1 · 성별 반전 ═══
 		{"t": "bg", "color": Color8(168, 85, 247), "desc": "desc_test1", "img": "bg_gender_room"},
 		{"t": "fade"},
 		{"t": "line", "who": "narrator", "key": "t1_dots"},
+		# 시뮬 시작 직후 — 정신 못 차리고 적응 4줄
+		{"t": "line", "who": "narrator", "key": "sim_adapt1"},
+		{"t": "line", "who": "heroine", "key": "sim_adapt2"},
+		{"t": "line", "who": "narrator", "key": "sim_adapt3"},
+		{"t": "line", "who": "heroine", "key": "sim_adapt4"},
 		{"t": "line", "who": "narrator", "key": "t1_wake"},
 		{"t": "line", "who": "heroine", "key": "t1_uh"},
 		{"t": "line", "who": "narrator", "key": "t1_startle"},

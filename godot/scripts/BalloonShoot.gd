@@ -8,13 +8,14 @@ signal finished(win: bool)
 var need := 5           # 성공에 필요한 명중 수
 var time_limit := 16.0  # 제한 시간(초)
 
-const RADIUS := 40.0    # 클릭 명중 허용 반경 px
+const RADIUS := 24.0    # 클릭 명중 허용 반경 px (작을수록 어렵다)
 const MAX_ON := 5       # 동시에 떠 있는 최대 풍선 수
 const COLORS := [Color8(230, 90, 110), Color8(90, 150, 220), Color8(240, 190, 80),
 	Color8(120, 200, 120), Color8(190, 120, 220)]
 
 var _balloons: Array = []   # [{node, pos, vx, vy}]
 var _hits := 0
+var _ammo := 0              # 남은 총알 = 맞춰야 하는 풍선 수 (헛쏘면 손해)
 var _time_left := 0.0
 var _done := false
 var _area: Rect2
@@ -27,6 +28,7 @@ var _hud: Label
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_time_left = time_limit
+	_ammo = need
 	var vp := get_viewport_rect().size
 	var bw := 520.0
 	var bh := 420.0
@@ -74,12 +76,12 @@ func _spawn() -> void:
 	add_child(lab)
 	var px := randf_range(_area.position.x + 40, _area.end.x - 40)
 	var py := _area.end.y - 30.0
-	var vx := randf_range(-60, 60)
-	var vy := randf_range(-70, -45)
+	var vx := randf_range(-120, 120)
+	var vy := randf_range(-150, -110)
 	_balloons.append({"node": lab, "pos": Vector2(px, py), "vx": vx, "vy": vy})
 
 func _update_hud() -> void:
-	_hud.text = "%s  %d / %d      ⏱ %.0f" % [Loc.t("shoot_hud"), _hits, need, ceil(_time_left)]
+	_hud.text = "%s  %d / %d      🔫 %d      ⏱ %.0f" % [Loc.t("shoot_hud"), _hits, need, _ammo, ceil(_time_left)]
 
 func _gui_input(event: InputEvent) -> void:
 	if _done:
@@ -89,6 +91,9 @@ func _gui_input(event: InputEvent) -> void:
 		_shoot(event.position)
 
 func _shoot(at: Vector2) -> void:
+	if _ammo <= 0:
+		return
+	_ammo -= 1   # 명중이든 헛방이든 총알 1발 소모 → 낭비 금지
 	Audio.play("tick")
 	var best := -1
 	var best_d := RADIUS
@@ -103,9 +108,11 @@ func _shoot(at: Vector2) -> void:
 		_balloons.remove_at(best)
 		_hits += 1
 		Audio.play("select")
-		_update_hud()
-		if _hits >= need:
-			_finish(true)
+	_update_hud()
+	if _hits >= need:
+		_finish(true)
+	elif _ammo <= 0:
+		_finish(false)   # 총알 다 씀 → 명중 부족이면 실패
 
 func _process(delta: float) -> void:
 	if _done:
@@ -120,7 +127,7 @@ func _process(delta: float) -> void:
 	_spawn_t -= delta
 	if _spawn_t <= 0.0:
 		_spawn()
-		_spawn_t = randf_range(0.5, 1.1)
+		_spawn_t = randf_range(0.35, 0.75)
 	var escaped: Array = []
 	for b in _balloons:
 		b["pos"].x += b["vx"] * delta

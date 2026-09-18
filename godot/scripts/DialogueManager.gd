@@ -270,6 +270,19 @@ func _finish() -> void:
 	if cb.is_valid():
 		cb.call()
 
+## 콜백 없이 즉시 모두 닫기 (메인 메뉴 복귀 등). 자동로드라 씬 새로고침에도 남기 때문.
+func force_close() -> void:
+	is_active = false
+	_typing = false
+	_queue = []
+	_on_done = Callable()
+	_on_choice = Callable()
+	_mode = ""
+	if _panel: _panel.visible = false
+	if _catcher: _catcher.visible = false
+	if _portrait: _portrait.visible = false
+	_clear_choices()
+
 func _on_catcher_input(event: InputEvent) -> void:
 	if _mode != "lines":
 		return   # 선택지 모드에선 버튼으로만 진행

@@ -37,6 +37,9 @@ var _score_ready := false
 var _paused := false
 var _pause_layer: CanvasLayer
 var _settings_layer: CanvasLayer
+var _confirm_layer: CanvasLayer
+var _confirm_label: Label
+var _confirm_yes_cb: Callable = Callable()
 
 # 미니게임 상태 (타이밍/QTE)
 var _mg_layer: CanvasLayer = null
@@ -76,6 +79,9 @@ var _hub_play_total := 0
 var _hub_exit_unlocked := false
 var _hub_exit_rect: ColorRect
 var _hub_exit_label: Label
+var _hub_i := 0   # 허브 beat 인덱스 (거리 복귀 시 직전 explore 탐색)
+var _food_steps: Array = []   # 분식 순차 선택 단계들
+var _food_step := 0
 
 # 탐색 상태 (다중 방 + 줌인)
 var _ex_rooms := {}          # roomid -> room dict
@@ -93,6 +99,7 @@ func _ready() -> void:
 	_build_title()
 	_build_score_layer()
 	_build_pause()
+	_build_confirm()
 	GameState.reset()
 	_story = load("res://scripts/Story.gd").beats()
 	_advance()   # 첫 beat = 타이틀
@@ -407,23 +414,31 @@ func _show_claw(b: Dictionary) -> void:
 
 # ── 분식 부스 (메뉴 골라 먹기) ──
 func _show_food_booth(f: Dictionary) -> void:
+	_food_steps = f.get("steps", [])
+	_food_step = 0
 	var intro := String(f.get("intro", ""))
 	if intro != "":
-		Dialogue.say("", Loc.t(intro), func(): _food_menu(f), SPEAKERS["narrator"]["color"])
+		Dialogue.say("", Loc.t(intro), _food_next_step, SPEAKERS["narrator"]["color"])
 	else:
-		_food_menu(f)
+		_food_next_step()
 
-func _food_menu(f: Dictionary) -> void:
-	var options: Array = f["options"]
+# 단계별 양자택일(떡볶이vs쫄볶이 → 김밥vs순대 → …)을 순서대로 진행
+func _food_next_step() -> void:
+	if _food_step >= _food_steps.size():
+		_reopen_hub()
+		return
+	var step: Dictionary = _food_steps[_food_step]
+	var options: Array = step["options"]
 	var display: Array = []
 	for o in options:
 		display.append({"text": Loc.t(o["key"])})
-	Dialogue.say_choices(_speaker_name("heroine"), Loc.t(f.get("prompt", "")), display,
+	Dialogue.say_choices(_speaker_name("heroine"), Loc.t(step.get("prompt", "")), display,
 		func(idx: int): _food_picked(options, idx), SPEAKERS["heroine"]["color"])
 
 func _food_picked(options: Array, idx: int) -> void:
 	var o: Dictionary = options[idx]
-	Dialogue.say("", Loc.t(o["reply"]), _reopen_hub, SPEAKERS["narrator"]["color"])
+	_food_step += 1
+	Dialogue.say("", Loc.t(o["reply"]), _food_next_step, SPEAKERS["narrator"]["color"])
 
 # ── 한강 2인용 자전거 중심잡기 ──
 func _show_bike(b: Dictionary) -> void:
@@ -764,6 +779,7 @@ func _mg_lock() -> void:
 # ══════════ 부스 허브 ══════════
 func _show_hub(b: Dictionary) -> void:
 	_hub_beat = b
+	_hub_i = _i - 1   # _advance 가 이미 증가시켰으므로 현재 허브 beat = _i-1
 	_hub_played = {}
 	_hub_node = Control.new()
 	_hub_node.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -783,7 +799,7 @@ func _show_hub(b: Dictionary) -> void:
 	var booths: Array = b["booths"]
 	_hub_play_total = 0
 	for bb in booths:
-		if not bb.get("exit", false):
+		if not bb.get("exit", false) and not bb.get("back", false):
 			_hub_play_total += 1
 
 	var vp := get_viewport_rect().size
@@ -827,27 +843,44 @@ func _make_booth(booth: Dictionary, idx: int, vp: Vector2) -> void:
 					_exit_hub()
 				else:
 					Dialogue.say("", Loc.t("hub_locked")))
-	else:
-		rect.color = booth.get("color", Color8(120, 90, 150))
+	elif booth.get("back", false):
+		# 거리로 돌아가기: 다 안 눌러도 직전 탐색(거리)으로 복귀
+		rect.color = booth.get("color", Color8(70, 78, 96))
 		panel.gui_input.connect(func(e: InputEvent):
 			if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT and e.pressed:
+				_hub_back())
+	else:
+		var is_food: bool = booth.has("food")
+		rect.color = booth.get("color", Color8(120, 90, 150))
+		panel.gui_input.connect(func(e: InputEvent):
+			if not (e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT and e.pressed):
+				return
+			if is_food:
+				# 포장마차: 한 번만. 다시 먹으려 하면 남자친구가 핀잔.
 				if _hub_played.has(idx):
+					Dialogue.say(_speaker_name("hero"), Loc.t("food_repeat"), Callable(), SPEAKERS["hero"]["color"])
 					return
 				_hub_played[idx] = true
 				rect.color = Color(0.3, 0.3, 0.36)
 				nm.modulate = Color(1, 1, 1, 0.5)
 				if _hub_played.size() >= _hub_play_total:
 					_unlock_hub_exit()
-				if _hub_node:
-					_hub_node.visible = false
-				if booth.has("food"):
-					_show_food_booth(booth["food"])
+				_hub_node.visible = false
+				_show_food_booth(booth["food"])
+			else:
+				# 게임: 성공/실패와 무관하게 몇 번이든 재시도 가능
+				if not _hub_played.has(idx):
+					_hub_played[idx] = true
+					rect.color = Color(0.3, 0.3, 0.36)
+					nm.modulate = Color(1, 1, 1, 0.6)
+					if _hub_played.size() >= _hub_play_total:
+						_unlock_hub_exit()
+				_hub_node.visible = false
+				var g: Dictionary = booth["game"]
+				if g.has("intro"):
+					Dialogue.say("", Loc.t(g["intro"]), func(): _launch_minigame(g, _reopen_hub), SPEAKERS["narrator"]["color"])
 				else:
-					var g: Dictionary = booth["game"]
-					if g.has("intro"):
-						Dialogue.say("", Loc.t(g["intro"]), func(): _launch_minigame(g, _reopen_hub), SPEAKERS["narrator"]["color"])
-					else:
-						_launch_minigame(g, _reopen_hub))
+					_launch_minigame(g, _reopen_hub))
 	_hub_node.add_child(panel)
 
 func _unlock_hub_exit() -> void:
@@ -866,6 +899,19 @@ func _exit_hub() -> void:
 	if _hub_node:
 		_hub_node.queue_free()
 		_hub_node = null
+
+func _hub_back() -> void:
+	# 허브 직전의 explore(거리)로 되돌아가 다시 둘러본다. 나가면 다시 이 허브로 돌아옴.
+	var target := -1
+	for j in range(_hub_i - 1, -1, -1):
+		if String(_story[j].get("t", "")) == "explore":
+			target = j
+			break
+	if target < 0:
+		return
+	_exit_hub()
+	_i = target
+	_advance()
 	_advance()
 
 # ══════════ 타이틀 / 저장 ══════════
@@ -995,6 +1041,51 @@ func _close_settings() -> void:
 func _quit_game() -> void:
 	get_tree().quit()
 
+# 메인 메뉴(타이틀)로 복귀. 현재 진행은 일시정지 시 이미 자동저장됨 → 씬 새로고침으로 깔끔히 리셋.
+func _quit_to_title() -> void:
+	Dialogue.force_close()   # 자동로드라 씬 새로고침에도 남는 대사창 정리
+	get_tree().reload_current_scene()
+
+# 재사용 가능한 확인 팝업. on_yes 는 '예' 눌렀을 때 실행.
+func _build_confirm() -> void:
+	_confirm_layer = CanvasLayer.new()
+	_confirm_layer.layer = 40   # 일시정지(30)·설정(31)·타이틀(25) 위
+	add_child(_confirm_layer)
+	var bg := ColorRect.new()
+	bg.color = Color(0, 0, 0, 0.78)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	_confirm_layer.add_child(bg)
+	_confirm_label = _mk_label(_confirm_layer, "", 26, Color(1, 0.95, 0.95))
+	_center_label(_confirm_label, -60)
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	row.offset_left = -170; row.offset_right = 170; row.offset_top = 12
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 24)
+	_confirm_layer.add_child(row)
+	var yes := Button.new()
+	yes.text = String(Loc.t("confirm_yes"))
+	yes.custom_minimum_size = Vector2(140, 48)
+	yes.pressed.connect(func():
+		_confirm_layer.visible = false
+		var cb := _confirm_yes_cb
+		_confirm_yes_cb = Callable()
+		if cb.is_valid():
+			cb.call())
+	row.add_child(yes)
+	var no := Button.new()
+	no.text = String(Loc.t("confirm_no"))
+	no.custom_minimum_size = Vector2(140, 48)
+	no.pressed.connect(func(): _confirm_layer.visible = false)
+	row.add_child(no)
+	_confirm_layer.visible = false
+
+func _ask_confirm(msg_key: String, on_yes: Callable) -> void:
+	_confirm_label.text = String(Loc.t(msg_key))
+	_confirm_yes_cb = on_yes
+	_confirm_layer.visible = true
+
 func _build_pause() -> void:
 	# 일시정지 메뉴
 	_pause_layer = CanvasLayer.new()
@@ -1014,7 +1105,8 @@ func _build_pause() -> void:
 	_pause_layer.add_child(pv)
 	_menu_button(pv, "btn_resume", _resume_game)
 	_menu_button(pv, "btn_settings", _open_settings)
-	_menu_button(pv, "btn_quit", _quit_game)
+	# 종료 → 확인 팝업 → 메인 메뉴로
+	_menu_button(pv, "btn_quit", func(): _ask_confirm("confirm_to_title", _quit_to_title))
 	_pause_layer.visible = false
 
 	# 설정 (지금은 UI 만)
@@ -1216,6 +1308,12 @@ func _build_title() -> void:
 		b_cont.text = String(Loc.t("title_continue"))
 		b_cont.pressed.connect(_on_continue)
 		vb.add_child(b_cont)
+
+	# 메인 메뉴 종료 → 확인 후 게임(앱) 자체 종료
+	var b_quit := Button.new()
+	b_quit.text = String(Loc.t("title_quit"))
+	b_quit.pressed.connect(func(): _ask_confirm("confirm_quit_app", _quit_game))
+	vb.add_child(b_quit)
 
 	_title_layer.visible = false
 
