@@ -24,6 +24,7 @@ var _meter: ColorRect
 var _title: Label
 var _hint: Label
 var _hud: Label
+var _retry_box: VBoxContainer = null   # 넘어졌을 때 재시도/포기 버튼
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -134,5 +135,38 @@ func _update_hud() -> void:
 func _finish(win: bool) -> void:
 	if _done: return
 	_done = true
-	_hint.text = String(Loc.t("bike_win")) if win else String(Loc.t("bike_lose"))
-	get_tree().create_timer(0.7).timeout.connect(func(): finished.emit(win))
+	if win:
+		_hint.text = String(Loc.t("bike_win"))
+		get_tree().create_timer(0.7).timeout.connect(func(): finished.emit(true))
+	else:
+		# 넘어짐 — 넘어진 채로 재시도 / 포기 선택
+		_hint.text = String(Loc.t("bike_lose"))
+		_show_retry()
+
+func _show_retry() -> void:
+	var box := VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	box.offset_left = -130; box.offset_right = 130; box.offset_top = -20
+	box.add_theme_constant_override("separation", 10)
+	add_child(box)
+	_retry_box = box
+	var rb := Button.new()
+	rb.text = String(Loc.t("bike_retry"))
+	rb.custom_minimum_size = Vector2(260, 46)
+	rb.pressed.connect(_retry)
+	box.add_child(rb)
+	var gb := Button.new()
+	gb.text = String(Loc.t("bike_giveup"))
+	gb.custom_minimum_size = Vector2(260, 46)
+	gb.pressed.connect(func(): finished.emit(false))
+	box.add_child(gb)
+
+func _retry() -> void:
+	if _retry_box:
+		_retry_box.queue_free()
+		_retry_box = null
+	_tilt = 0.0; _vel = 0.0; _t = 0.0; _nudge_t = 0.0
+	_done = false
+	_hint.text = String(Loc.t("bike_hint"))
+	_update_visual()
+	_update_hud()

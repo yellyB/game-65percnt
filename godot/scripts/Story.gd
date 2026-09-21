@@ -181,9 +181,24 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "t1_date_awk"},
 		{"t": "line", "who": "hero", "key": "t1_hero_date1", "expr": "hero_female_calm"},
 		{"t": "line", "who": "heroine", "key": "t1_heroine_date1"},
+		# ── 카페 데이트: 음료 선택 + 케이크 분기 (결국 남친이 다 먹음) ──
+		{"t": "line", "who": "narrator", "key": "t1_cafe_enter"},
+		{"t": "line", "who": "hero", "key": "t1_cafe_hero1", "expr": "hero_female_calm"},
+		{"t": "choice", "who": "heroine", "prompt": "t1_cafe_drink_q", "options": [
+			{"key": "t1_drink_coffee", "reply": "t1_drink_coffee_r"},
+			{"key": "t1_drink_choco", "reply": "t1_drink_choco_r"}]},
+		{"t": "line", "who": "hero", "key": "t1_cafe_cake_ask", "expr": "hero_female_calm"},
+		{"t": "choice", "who": "heroine", "prompt": "t1_cafe_cake_q", "options": [
+			{"key": "t1_cake_yes", "reply": "t1_cake_yes_r", "flag": "t1_ate_cake", "flag_val": true},
+			{"key": "t1_cake_no", "reply": "t1_cake_no_r", "flag": "t1_ate_cake", "flag_val": false}]},
+		{"t": "line", "who": "hero", "key": "t1_cake_yes_hero", "expr": "hero_female_calm", "if": "t1_ate_cake"},
+		{"t": "line", "who": "heroine", "key": "t1_cake_yes_heroine", "if": "t1_ate_cake"},
+		{"t": "line", "who": "hero", "key": "t1_cake_no_hero", "expr": "hero_female_calm", "ifnot": "t1_ate_cake"},
+		{"t": "line", "who": "narrator", "key": "t1_cake_no_narr", "ifnot": "t1_ate_cake"},
+		{"t": "line", "who": "narrator", "key": "t1_cake_alleat"},
+		{"t": "line", "who": "hero", "key": "t1_cake_alleat_hero", "expr": "hero_female_calm"},
+		{"t": "line", "who": "narrator", "key": "t1_cafe_out"},
 		{"t": "explore", "data": {"goal": "ex_date_goal", "objects": [
-			{"name": "ex_date_cafe_name", "lines": "ex_date_cafe_lines", "img": "obj_date_cafe",
-			 "frac": Vector2(0.22, 0.40), "wsize": Vector2(110, 90), "color": Color8(160, 110, 80), "clue": true, "gauge": 1},
 			{"name": "ex_date_park_name", "lines": "ex_date_park_lines", "img": "obj_date_park",
 			 "frac": Vector2(0.50, 0.32), "wsize": Vector2(110, 90), "color": Color8(90, 160, 90), "clue": true, "gauge": 1},
 			{"name": "ex_date_movie_name", "lines": "ex_date_movie_lines", "img": "obj_date_movie",

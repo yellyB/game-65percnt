@@ -112,6 +112,11 @@ func _advance() -> void:
 	_save_point = _i   # 재개 지점 추적 (디스크 쓰기는 체크포인트에서만)
 	var b: Dictionary = _story[_i]
 	_i += 1
+	# 조건부 beat: if=플래그 참일 때만 / ifnot=거짓일 때만
+	if (b.has("if") and not GameState.has_flag(String(b["if"]))) or \
+	   (b.has("ifnot") and GameState.has_flag(String(b["ifnot"]))):
+		_advance()
+		return
 	match String(b.get("t", "")):
 		"title":   _show_title()
 		"bg":      _set_bg(b); _autosave(); _advance()
@@ -150,6 +155,8 @@ func _do_choice(b: Dictionary) -> void:
 
 func _on_choice_picked(options: Array, idx: int) -> void:
 	var o: Dictionary = options[idx]
+	if o.has("flag"):
+		GameState.set_flag(String(o["flag"]), bool(o.get("flag_val", true)))
 	_autosave()   # 체크포인트: 선택 직후
 	if o.has("reply"):
 		Dialogue.say("", Loc.t(o["reply"]), _advance, SPEAKERS["narrator"]["color"])
