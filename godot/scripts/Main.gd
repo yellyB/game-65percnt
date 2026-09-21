@@ -135,7 +135,7 @@ func _do_line(b: Dictionary) -> void:
 	var who := String(b.get("who", "narrator"))
 	var sp: Dictionary = SPEAKERS.get(who, SPEAKERS["narrator"])
 	_set_artcue(b)
-	Dialogue.say(_speaker_name(who), Loc.t(b["key"]), _advance, sp["color"], String(b.get("expr", "")))
+	Dialogue.say(_speaker_name(who), Loc.t(b["key"]), _advance, sp["color"], String(b.get("expr", "")), who == "narrator")
 
 func _do_choice(b: Dictionary) -> void:
 	var who := String(b.get("who", "heroine"))

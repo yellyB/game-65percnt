@@ -194,7 +194,8 @@ func _set_portrait(expr: String) -> void:
 		_portrait_label.visible = true
 
 ## 대사 출력. lines 는 String 또는 Array[String]. name_color 로 화자별 색.
-func say(speaker: String, lines, on_done: Callable = Callable(), name_color := Color(1.0, 0.6, 0.7), portrait := "") -> void:
+## narration=true 일 때만 흐린 회색(나레이션/독백). 선택지 응답·미니게임 결과 등은 false(흰색).
+func say(speaker: String, lines, on_done: Callable = Callable(), name_color := Color(1.0, 0.6, 0.7), portrait := "", narration := false) -> void:
 	_queue = (lines.duplicate() if typeof(lines) == TYPE_ARRAY else [str(lines)])
 	_on_done = on_done
 	_mode = "lines"
@@ -203,7 +204,7 @@ func say(speaker: String, lines, on_done: Callable = Callable(), name_color := C
 	_name.text = speaker
 	_name.modulate = name_color
 	_name.visible = speaker != ""
-	_apply_speaker_style(speaker)
+	_apply_speaker_style(speaker, narration)
 	_clear_choices()
 	_choices.visible = false
 	_hint.visible = true
@@ -223,11 +224,10 @@ func _next_line() -> void:
 	_typing = true
 	_text.text = ""
 
-## 나레이션(이름 없음)=흐린 회색·따옴표 X, 대사=밝은 흰색·「」. SYSTEM은 대사색이되 따옴표 X.
-func _apply_speaker_style(speaker: String) -> void:
-	var is_narration := speaker == ""
-	_text.modulate = NARRATION_COL if is_narration else SPEECH_COL
-	_quote_lines = (not is_narration) and speaker != String(Loc.t("spk_system"))
+## narration=흐린 회색. 이름 있는 대사=「」로 감쌈(SYSTEM 제외).
+func _apply_speaker_style(speaker: String, narration: bool) -> void:
+	_text.modulate = NARRATION_COL if narration else SPEECH_COL
+	_quote_lines = (speaker != "") and speaker != String(Loc.t("spk_system"))
 
 func _wrap_quotes(s: String) -> String:
 	var t := s.strip_edges()
@@ -259,7 +259,7 @@ func say_choices(speaker: String, prompt: String, options: Array, on_choice: Cal
 	_name.text = speaker
 	_name.modulate = name_color
 	_name.visible = speaker != ""
-	_apply_speaker_style(speaker)
+	_apply_speaker_style(speaker, speaker == "")
 	_text.text = _wrap_quotes(prompt) if _quote_lines else prompt
 	_hint.visible = false
 	_clear_choices()
