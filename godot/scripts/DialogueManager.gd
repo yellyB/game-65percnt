@@ -233,9 +233,12 @@ func _wrap_quotes(s: String) -> String:
 	var t := s.strip_edges()
 	if t.is_empty():
 		return s
-	var c := t.substr(0, 1)
-	if c in ["「", "『", "\"", "“", "”", "'"]:
-		return s   # 이미 따옴표로 시작하면 그대로
+	if t.begins_with("「") or t.begins_with("『"):
+		return s   # 이미 「」/『』로 감싸짐 → 그대로
+	# 전체가 " " 또는 “ ” 로 감싸진 경우 → 「」로 치환 (스타일 통일)
+	if t.length() >= 2 and ((t.begins_with("\"") and t.ends_with("\"")) or (t.begins_with("“") and t.ends_with("”"))):
+		return "「" + t.substr(1, t.length() - 2) + "」"
+	# 그 외(문장 속 인용부호 '…' 로 시작하는 경우 포함)는 통째로 감쌈
 	return "「" + s + "」"
 
 ## 타이핑 중이면 즉시 전체 표시, 아니면 다음 줄
