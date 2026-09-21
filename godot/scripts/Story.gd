@@ -12,7 +12,7 @@ static func beats() -> Array:
 		{"t": "title"},
 
 		# ═══ 프롤로그 · 축제 ═══
-		{"t": "bg", "color": Color8(232, 168, 124), "desc": "desc_festival", "img": "bg_festival"},
+		{"t": "bg", "color": Color8(232, 168, 124), "desc": "desc_festival", "img": "bg_festival", "label": "프롤로그 · 축제"},
 		{"t": "line", "who": "narrator", "key": "pr_walk1"},
 		# 축제 간략 소개 (처음 온 동네 · 우연히 들른 작은 축제)
 		{"t": "line", "who": "narrator", "key": "pr_fest_intro1"},
@@ -134,7 +134,7 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "sim_enter10"},
 
 		# ═══ 테스트 1 · 성별 반전 ═══
-		{"t": "bg", "color": Color8(168, 85, 247), "desc": "desc_test1", "img": "bg_gender_room"},
+		{"t": "bg", "color": Color8(168, 85, 247), "desc": "desc_test1", "img": "bg_gender_room", "label": "테스트 1 · 성별 반전"},
 		{"t": "fade"},
 		{"t": "line", "who": "narrator", "key": "t1_dots"},
 		# 시뮬 시작 직후 — 정신 못 차리고 적응 4줄
@@ -218,7 +218,7 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "t1_mono_understand"},
 
 		# ═══ 테스트 1 종료 ═══
-		{"t": "bg", "color": Color8(26, 26, 46), "desc": ""},
+		{"t": "bg", "color": Color8(26, 26, 46), "desc": "", "label": "테스트 1 종료"},
 		{"t": "fade"},
 		{"t": "line", "who": "system", "key": "mid_sys_end"},
 		{"t": "line", "who": "hero", "key": "t1_debrief_hero", "expr": "hero_normal_calm"},
@@ -232,7 +232,7 @@ static func beats() -> Array:
 		{"t": "line", "who": "heroine", "key": "mid_heroine_ok"},
 
 		# ═══ 테스트 2 · 강아지 ═══
-		{"t": "bg", "color": Color8(86, 130, 60), "desc": "desc_test2", "img": "bg_puppy_room"},
+		{"t": "bg", "color": Color8(86, 130, 60), "desc": "desc_test2", "img": "bg_puppy_room", "label": "테스트 2 · 강아지"},
 		{"t": "fade"},
 		{"t": "line", "who": "narrator", "key": "t2_wake", "cg": "cg_dog_pov"},
 		{"t": "line", "who": "hero", "key": "t2_isit", "expr": "hero_normal_surprise"},
@@ -285,7 +285,7 @@ static func beats() -> Array:
 		{"t": "line", "who": "heroine", "key": "t2_human"},
 
 		# ═══ 테스트 3 · 부녀 ═══
-		{"t": "bg", "color": Color8(110, 110, 110), "desc": "desc_test3", "img": "bg_family_home"},
+		{"t": "bg", "color": Color8(110, 110, 110), "desc": "desc_test3", "img": "bg_family_home", "label": "테스트 3 · 부녀"},
 		{"t": "fade"},
 		{"t": "line", "who": "heroine", "key": "t3_human"},
 		{"t": "line", "who": "system", "key": "t3_confirm"},
@@ -387,7 +387,7 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "t3_mono_realize"},
 
 		# ═══ 결과 ═══
-		{"t": "line", "who": "system", "key": "res_sys_end"},
+		{"t": "line", "who": "system", "key": "res_sys_end", "label": "결과"},
 		{"t": "bg", "color": Color8(255, 236, 210), "desc": "", "img": "bg_result"},
 		{"t": "fade"},
 		{"t": "line", "who": "narrator", "key": "res_wake"},
@@ -401,5 +401,5 @@ static func beats() -> Array:
 		{"t": "line", "who": "narrator", "key": "res_silence_narr2"},
 
 		# ═══ 에필로그 (진엔딩 하나) ═══
-		{"t": "ending"},
+		{"t": "ending", "label": "에필로그 · 엔딩"},
 	]

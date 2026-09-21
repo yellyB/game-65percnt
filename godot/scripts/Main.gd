@@ -40,6 +40,7 @@ var _settings_layer: CanvasLayer
 var _confirm_layer: CanvasLayer
 var _confirm_label: Label
 var _confirm_yes_cb: Callable = Callable()
+var _debug_layer: CanvasLayer = null   # 디버그 점프 메뉴 (F10)
 
 # 미니게임 상태 (타이밍/QTE)
 var _mg_layer: CanvasLayer = null
@@ -952,6 +953,11 @@ func _restore_bg_before(beat: int) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _started:
 		return
+	# 디버그 점프 (F10) — 언제든 열림. 디버그 빌드에서만.
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10 and OS.is_debug_build():
+		get_viewport().set_input_as_handled()
+		_toggle_debug_jump()
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()
 		_toggle_pause()
@@ -1085,6 +1091,100 @@ func _ask_confirm(msg_key: String, on_yes: Callable) -> void:
 	_confirm_label.text = String(Loc.t(msg_key))
 	_confirm_yes_cb = on_yes
 	_confirm_layer.visible = true
+
+# ══════════ 디버그 점프 (F10) ══════════
+func _toggle_debug_jump() -> void:
+	if _debug_layer and _debug_layer.visible:
+		_debug_layer.visible = false
+	else:
+		_open_debug_jump()
+
+func _open_debug_jump() -> void:
+	if _debug_layer == null:
+		_build_debug_jump()
+	_debug_layer.visible = true
+
+func _build_debug_jump() -> void:
+	_debug_layer = CanvasLayer.new()
+	_debug_layer.layer = 50   # 최상단 (일시정지·확인 위)
+	add_child(_debug_layer)
+	var bg := ColorRect.new()
+	bg.color = Color(0.03, 0.03, 0.06, 0.95)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	_debug_layer.add_child(bg)
+	var title := _mk_label(_debug_layer, "🐞 디버그 점프  —  클릭해 이동 / F10 닫기", 18, Color(1, 0.85, 0.4))
+	title.position = Vector2(20, 14)
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.offset_top = 46; scroll.offset_left = 14; scroll.offset_right = -14; scroll.offset_bottom = -14
+	_debug_layer.add_child(scroll)
+	var vb := VBoxContainer.new()
+	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vb.add_theme_constant_override("separation", 1)
+	scroll.add_child(vb)
+	for i in _story.size():
+		var pv := _beat_preview(i, _story[i])
+		if pv == "":
+			continue
+		var b := Button.new()
+		b.text = pv
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.autowrap_mode = TextServer.AUTOWRAP_OFF
+		b.add_theme_font_size_override("font_size", 13)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var idx := i
+		b.pressed.connect(func(): _debug_jump_to(idx))
+		vb.add_child(b)
+	_debug_layer.visible = false
+
+func _beat_preview(i: int, b: Dictionary) -> String:
+	var head := ("━━━  " + String(b["label"]) + "  ━━━\n") if b.has("label") else ""
+	match String(b.get("t", "")):
+		"line":
+			var who := _speaker_name(String(b.get("who", "narrator")))
+			return "%s#%d  %s: %s" % [head, i, (who if who != "" else "─"), _snippet(b.get("key", ""))]
+		"choice":  return "%s#%d  [선택] %s" % [head, i, _snippet(b.get("prompt", ""))]
+		"explore":
+			var g = b["data"].get("goal", "") if b.has("data") else ""
+			return "%s#%d  [탐색] %s" % [head, i, _snippet(g)]
+		"hub":     return "%s#%d  [오락 부스 허브]" % [head, i]
+		"minigame":return "%s#%d  [미니게임] %s" % [head, i, String(b.get("game", ""))]
+		"bg":      return "%s#%d  [배경] %s" % [head, i, _snippet(b.get("desc", ""))]
+		"score":   return "%s#%d  [결과 화면]" % [head, i]
+		"ending":  return "%s#%d  [엔딩]" % [head, i]
+		_:         return (head + "#%d" % i) if head != "" else ""
+
+func _snippet(key) -> String:
+	if typeof(key) == TYPE_STRING and String(key) == "":
+		return ""
+	var v = Loc.t(key)
+	var s := String(v[0]) if (typeof(v) == TYPE_ARRAY and (v as Array).size() > 0) else String(v)
+	s = s.replace("\n", " ")
+	if s.length() > 36:
+		s = s.substr(0, 36) + "…"
+	return s
+
+func _debug_jump_to(idx: int) -> void:
+	# 진행 중 임시 상태 모두 정리 후 해당 beat 부터 재생
+	Dialogue.force_close()
+	if _mg_layer:
+		_mg_layer.queue_free()
+		_mg_layer = null
+	_mash_active = false
+	_kp_active = false
+	_mg_active = false
+	_clear_explore()   # _world 자식(탐색·허브) 정리 + explore 상태 리셋
+	_hub_node = null
+	if _clue_label: _clue_label.visible = false
+	if _goal: _goal.visible = false
+	if _debug_layer: _debug_layer.visible = false
+	_paused = false
+	if _pause_layer: _pause_layer.visible = false
+	if _settings_layer: _settings_layer.visible = false
+	_restore_bg_before(idx)
+	_i = idx
+	_advance()
 
 func _build_pause() -> void:
 	# 일시정지 메뉴
