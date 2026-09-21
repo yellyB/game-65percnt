@@ -30,6 +30,9 @@ var _full_text := ""
 var _reveal := 0.0
 var _last_tick := 0
 const TYPE_CPS := 45.0    # 초당 글자 수
+const NARRATION_COL := Color(0.76, 0.76, 0.82)   # 나레이션: 흐린 회색
+const SPEECH_COL := Color(1, 1, 1)               # 대사: 밝은 흰색
+var _quote_lines := false   # 이번 화자가 소리 내어 말하는가 → 「」로 감쌈
 
 var _cursor_root: Node2D   # 소프트웨어 커서 (OS 커서가 안 그려지는 macOS 이슈 회피)
 
@@ -200,6 +203,7 @@ func say(speaker: String, lines, on_done: Callable = Callable(), name_color := C
 	_name.text = speaker
 	_name.modulate = name_color
 	_name.visible = speaker != ""
+	_apply_speaker_style(speaker)
 	_clear_choices()
 	_choices.visible = false
 	_hint.visible = true
@@ -212,10 +216,27 @@ func _next_line() -> void:
 		_finish()
 		return
 	_full_text = str(_queue.pop_front())
+	if _quote_lines:
+		_full_text = _wrap_quotes(_full_text)
 	_reveal = 0.0
 	_last_tick = 0
 	_typing = true
 	_text.text = ""
+
+## 나레이션(이름 없음)=흐린 회색·따옴표 X, 대사=밝은 흰색·「」. SYSTEM은 대사색이되 따옴표 X.
+func _apply_speaker_style(speaker: String) -> void:
+	var is_narration := speaker == ""
+	_text.modulate = NARRATION_COL if is_narration else SPEECH_COL
+	_quote_lines = (not is_narration) and speaker != String(Loc.t("spk_system"))
+
+func _wrap_quotes(s: String) -> String:
+	var t := s.strip_edges()
+	if t.is_empty():
+		return s
+	var c := t.substr(0, 1)
+	if c in ["「", "『", "\"", "“", "”", "'"]:
+		return s   # 이미 따옴표로 시작하면 그대로
+	return "「" + s + "」"
 
 ## 타이핑 중이면 즉시 전체 표시, 아니면 다음 줄
 func _advance_or_skip() -> void:
@@ -235,7 +256,8 @@ func say_choices(speaker: String, prompt: String, options: Array, on_choice: Cal
 	_name.text = speaker
 	_name.modulate = name_color
 	_name.visible = speaker != ""
-	_text.text = prompt
+	_apply_speaker_style(speaker)
+	_text.text = _wrap_quotes(prompt) if _quote_lines else prompt
 	_hint.visible = false
 	_clear_choices()
 	for i in options.size():
