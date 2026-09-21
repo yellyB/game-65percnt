@@ -115,6 +115,9 @@ static func beats() -> Array:
 		{"t": "line", "who": "system", "key": "pr_sys_welcome"},
 		{"t": "line", "who": "heroine", "key": "pr_heroine_startled"},
 		{"t": "line", "who": "narrator", "key": "pr_narr_menu"},
+		# 메뉴 선택: 나레이션 대신 직접 버튼 클릭
+		{"t": "choice", "who": "system", "prompt": "pr_menu_prompt", "options": [
+			{"key": "pr_menu_opt", "reply": "pr_menu_reply"}]},
 		{"t": "line", "who": "system", "key": "pr_sys_desc1"},
 		{"t": "line", "who": "system", "key": "pr_sys_desc2"},
 		{"t": "line", "who": "system", "key": "pr_sys_desc3"},
