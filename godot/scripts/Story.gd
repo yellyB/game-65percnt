@@ -252,13 +252,13 @@ static func beats() -> Array:
 		# ═══ 테스트 2 · 강아지 ═══
 		{"t": "bg", "color": Color8(86, 130, 60), "desc": "desc_test2", "img": "bg_puppy_room", "label": "테스트 2 · 강아지"},
 		{"t": "fade"},
+		# 강아지 자각을 탐색으로 서서히 (바로 알지 않음)
 		{"t": "line", "who": "narrator", "key": "t2_wake", "cg": "cg_dog_pov"},
+		{"t": "line", "who": "narrator", "key": "t2_sense1"},
+		{"t": "line", "who": "narrator", "key": "t2_sense2"},
+		{"t": "line", "who": "narrator", "key": "t2_trybark"},
 		{"t": "line", "who": "hero", "key": "t2_isit", "expr": "hero_normal_surprise"},
-		{"t": "line", "who": "narrator", "key": "t2_dog"},
-		{"t": "line", "who": "narrator", "key": "t2_monolog1"},
-		{"t": "minigame", "game": "timing", "prompt": "mg_treat_prompt",
-		 "target": 0.5, "halfwidth": 0.11, "speed": 1.0,
-		 "success_gauge": 1, "fail_gauge": 0, "success": "mg_treat_win", "fail": "mg_treat_lose"},
+		{"t": "line", "who": "narrator", "key": "t2_confused"},
 		{"t": "explore", "data": {"goal": "ex_puppy_goal", "objects": [
 			{"name": "ex_puppy_bowl_name", "lines": "ex_puppy_bowl_lines", "img": "obj_puppy_bowl",
 			 "frac": Vector2(0.20, 0.60), "wsize": Vector2(120, 80), "color": Color8(179, 128, 77), "clue": true},
@@ -277,6 +277,13 @@ static func beats() -> Array:
 			 "frac": Vector2(0.88, 0.18), "wsize": Vector2(70, 70), "color": Color8(230, 216, 128), "hidden": true, "gauge": 2},
 			{"name": "ex_puppy_exit_name", "lines": "ex_puppy_exit_lines", "img": "obj_puppy_exit",
 			 "frac": Vector2(0.50, 0.82), "wsize": Vector2(150, 60), "color": Color8(128, 128, 140), "exit": true}]}},
+		# 탐색을 통해 확정되는 자각
+		{"t": "line", "who": "narrator", "key": "t2_dog"},
+		{"t": "line", "who": "narrator", "key": "t2_realize"},
+		{"t": "line", "who": "narrator", "key": "t2_monolog1"},
+		{"t": "minigame", "game": "timing", "prompt": "mg_treat_prompt",
+		 "target": 0.5, "halfwidth": 0.11, "speed": 1.0,
+		 "success_gauge": 1, "fail_gauge": 0, "success": "mg_treat_win", "fail": "mg_treat_lose"},
 		{"t": "line", "who": "narrator", "key": "t2_narr_days"},
 		{"t": "line", "who": "narrator", "key": "t2_stage1_narr"},
 		{"t": "line", "who": "hero", "key": "t2_hero_stage1", "expr": "hero_normal_calm"},
@@ -305,20 +312,28 @@ static func beats() -> Array:
 		# ═══ 테스트 3 · 부녀 ═══
 		{"t": "bg", "color": Color8(110, 110, 110), "desc": "desc_test3", "img": "bg_family_home", "label": "테스트 3 · 부녀"},
 		{"t": "fade"},
+		# 부녀 관계 자각을 탐색으로 서서히 (증명서로 바로 알지 않음)
 		{"t": "line", "who": "heroine", "key": "t3_human"},
 		{"t": "line", "who": "system", "key": "t3_confirm"},
+		{"t": "line", "who": "heroine", "key": "t3_older_q"},
+		{"t": "line", "who": "narrator", "key": "t3_older_narr"},
+		{"t": "line", "who": "narrator", "key": "t3_where"},
+		# 집을 뒤지며 조각을 모아 부녀지간임을 깨닫는다 ('자상함/통제'로도 읽히는 흔적 포함)
+		{"t": "explore", "data": {"goal": "ex_home_goal", "objects": [
+			{"name": "ex_home_note_name", "lines": "ex_home_note_lines", "img": "obj_home_note",
+			 "frac": Vector2(0.24, 0.42), "wsize": Vector2(120, 90), "color": Color8(150, 130, 90), "clue": true},
+			{"name": "ex_home_photo_name", "lines": "ex_home_photo_lines", "img": "obj_home_photo",
+			 "frac": Vector2(0.52, 0.40), "wsize": Vector2(110, 90), "color": Color8(120, 110, 130), "clue": true},
+			{"name": "ex_home_nameplate_name", "lines": "ex_home_nameplate_lines", "img": "obj_home_nameplate",
+			 "frac": Vector2(0.80, 0.42), "wsize": Vector2(100, 80), "color": Color8(130, 120, 100), "clue": true},
+			{"name": "ex_home_cert_name", "lines": "ex_home_cert_lines", "img": "obj_home_cert",
+			 "frac": Vector2(0.38, 0.62), "wsize": Vector2(120, 90), "color": Color8(170, 165, 150), "clue": true},
+			{"name": "ex_home_exit_name", "lines": "ex_home_exit_lines", "img": "obj_home_exit",
+			 "frac": Vector2(0.50, 0.82), "wsize": Vector2(120, 60), "color": Color8(90, 90, 100), "exit": true}]}},
 		{"t": "line", "who": "narrator", "key": "t3_cert"},
 		{"t": "line", "who": "heroine", "key": "t3_father"},
 		{"t": "line", "who": "narrator", "key": "t3_shock"},
 		{"t": "line", "who": "narrator", "key": "t3_disgust"},
-		# 부녀 집 둘러보기 — '자상함'으로도, '통제'로도 읽히는 애매한 흔적 (1~2개)
-		{"t": "explore", "data": {"goal": "ex_home_goal", "objects": [
-			{"name": "ex_home_note_name", "lines": "ex_home_note_lines", "img": "obj_home_note",
-			 "frac": Vector2(0.30, 0.45), "wsize": Vector2(120, 90), "color": Color8(150, 130, 90), "clue": true},
-			{"name": "ex_home_photo_name", "lines": "ex_home_photo_lines", "img": "obj_home_photo",
-			 "frac": Vector2(0.70, 0.45), "wsize": Vector2(110, 90), "color": Color8(120, 110, 130), "clue": true},
-			{"name": "ex_home_exit_name", "lines": "ex_home_exit_lines", "img": "obj_home_exit",
-			 "frac": Vector2(0.50, 0.80), "wsize": Vector2(120, 60), "color": Color8(90, 90, 100), "exit": true}]}},
 		# 사건: 위기(연타)→감싸안기, 다친 곳 치료(타이밍). 부성애로도 읽히게 모호하게.
 		{"t": "line", "who": "narrator", "key": "t3_moment"},
 		{"t": "line", "who": "narrator", "key": "t3_crisis1"},
